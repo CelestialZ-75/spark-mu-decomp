@@ -1,0 +1,7 @@
+**
+!pyproject.toml
+!uv.lock
+!scripts/
+!scripts/environment_smoke.py
+!environment/
+!environment/Dockerfile
