@@ -3,10 +3,12 @@
 在小规模 HD-EMG 上实现单次 MU 分解内部的 Spark 并行，并对比 CPU、CUDA GPU
 和 Spark 的结果与成本。小数据上 Spark 较慢也属于有效实验结果。
 
-当前阶段：环境与依赖准备。尚未实现课程 CLI、私有核心包或完整 MU 分解。
+当前阶段：环境已完成 CPU/Spark local 验收；已实现统一矩阵后端和 CLI 检查入口。
+私有核心包与完整 MU 分解尚未接入。
 
 - [分阶段搭建与验收](SETUP_PLAN.md)
 - [WSL / Docker 操作说明](environment/README.md)
+- [统一后端接口与数值验收](docs/BACKEND_CONTRACT.md)
 - [已核实状态](docs/knowledge-base/KNOWLEDGE.md)
 
 原始完整课程计划保留在本地，不随公开仓库发布。
@@ -21,6 +23,9 @@ bash scripts/bootstrap_wsl.sh cpu
 .venv-wsl/bin/python scripts/environment_smoke.py --backend cpu
 # Java 17 安装后
 .venv-wsl/bin/python scripts/environment_smoke.py --backend spark
+# 已安装课程包后的统一入口
+.venv-wsl/bin/mu-decomp kernel-check --backend cpu
+.venv-wsl/bin/mu-decomp kernel-check --backend spark --partitions 4
 ```
 
 原科研示例目前是源码，尚非独立 Python 包。公开仓库不包含其源码或真实数据；

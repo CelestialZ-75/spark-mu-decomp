@@ -1,6 +1,6 @@
 [project]
 name = "spark-mu-course"
-version = "0.0.1"
+version = "0.1.0"
 description = "Environment and distributed execution for the MU course project"
 requires-python = ">=3.11,<3.12"
 dependencies = [
@@ -16,11 +16,21 @@ cpu = ["torch==2.8.0"]
 gpu = ["torch==2.8.0"]
 plots = ["matplotlib>=3.8,<4"]
 
+[project.scripts]
+mu-decomp = "mu_course.cli:main"
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
 [dependency-groups]
 dev = ["pytest>=8,<9", "ruff>=0.11,<1"]
 
 [tool.uv]
-package = false
+package = true
 environments = ["sys_platform == 'linux' and platform_machine == 'x86_64'"]
 conflicts = [[{ extra = "cpu" }, { extra = "gpu" }]]
 
@@ -43,3 +53,6 @@ explicit = true
 [tool.ruff]
 target-version = "py311"
 line-length = 100
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

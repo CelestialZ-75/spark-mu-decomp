@@ -31,14 +31,32 @@
 - Dependency resolution succeeded: 48 packages including optional variants; 30 CPU/development
   packages installed in `.venv-wsl` using Python 3.11.15. Java reports 17.0.20.1.
 - User authorized publishing environment files; original full plan remains ignored locally.
+- Initial environment commit `a2e3896` was pushed; `main` tracks `origin/main`.
 - CPU tensor calculation and Spark `local[2]` smoke passed; two distinct Python worker processes
   executed the two partitions with matching Python/Torch versions. This is not two-host acceptance.
 - Ruff, Bash/Python syntax and TOML/YAML parsing passed. Docker runtime and CUDA tests remain pending.
 - Local check artifacts are in ignored `outputs/environment/`.
 
+## Architecture implementation
+
+- Installable course package 0.1.0 exposes `mu-decomp doctor` and `kernel-check`.
+- CPU/CUDA share TorchBackend. SparkBackend caches time blocks, broadcasts operands,
+  reduces contributions globally and validates ordered projections and worker versions.
+- Generic matrix math is public; private CKC engine, data preparation and MU output are pending.
+- Main suite: 23 passed, 1 actual-CUDA test skipped (CPU Torch installed). Three additional
+  zero-input/overflow tests passed. CPU/Spark numerical operations cover uneven partitions,
+  float32/64, rank-deficient input, shape/finite checks and resource lifecycle.
+- Public wheel build passed. Dockerfile installs the same course package without editable mode.
+- Installed CPU and Spark four-partition CLI checks passed; maximum absolute error against
+  NumPy was about 1.8e-15 on the deterministic float64 check. This is not a performance result.
+- Final CLI tests also passed (including invalid Spark thread settings and no-overwrite output).
+  Across the main and targeted runs, 27 distinct tests passed and 1 real-CUDA test was skipped.
+  Ruff formatting/lint and Git whitespace checks passed. CUDA and Docker runtime remain unverified.
+
 ## Next steps
 
 - Install Docker Desktop through the documented path; validate the Compose runtime.
 - Validate CUDA and two-worker execution; freeze actual runtime/image versions.
-- Package private core separately with provenance and regression before implementing CKC routing.
+- Package private core separately with provenance and reference regression, then connect its
+  controller to the implemented matrix protocol; do not copy private policies into public backends.
 - Freeze one approved plateau input and algorithm policy before backend comparisons.

@@ -3,5 +3,11 @@
 !uv.lock
 !scripts/
 !scripts/environment_smoke.py
+!scripts/submit.py
+!src/
+!src/**
 !environment/
 !environment/Dockerfile
+**/__pycache__
+**/*.pyc
+**/*.egg-info

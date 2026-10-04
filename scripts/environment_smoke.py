@@ -57,9 +57,15 @@ def main():
     if args.backend == "spark":
         from pyspark.sql import SparkSession
 
-        spark = SparkSession.builder.master(args.master).appName("mu-environment-smoke").getOrCreate()
+        spark = (
+            SparkSession.builder.master(args.master).appName("mu-environment-smoke").getOrCreate()
+        )
         try:
-            rows = spark.sparkContext.parallelize(range(16), 2).mapPartitions(probe_partition).collect()
+            rows = (
+                spark.sparkContext.parallelize(range(16), 2)
+                .mapPartitions(probe_partition)
+                .collect()
+            )
             if sum(row["sum_squares"] for row in rows) != 1240:
                 raise RuntimeError("Distributed tensor calculation failed")
             if sorted(item for row in rows for item in row["items"]) != list(range(16)):
@@ -68,7 +74,9 @@ def main():
                 if row["torch"] != torch.__version__ or row["python"] != platform.python_version():
                     raise RuntimeError("Driver/executor runtime mismatch")
             if args.require_two_hosts and len({row["host"] for row in rows}) < 2:
-                raise RuntimeError("No evidence of work on two distinct worker containers; retry and inspect UI")
+                raise RuntimeError(
+                    "No evidence of work on two distinct worker containers; retry and inspect UI"
+                )
             report["partitions"] = rows
         finally:
             spark.stop()

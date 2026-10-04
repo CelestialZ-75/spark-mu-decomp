@@ -10,8 +10,14 @@
 | `environment/Dockerfile` | Shared non-root CPU runtime image |
 | `environment/compose.yaml` | Isolated master, two workers and client-mode driver |
 | `SETUP_PLAN.md` | Staged implementation, acceptance and public/private boundary |
+| `src/mu_course/contracts.py`, `validation.py` | Shared matrix protocol and finite/shape checks |
+| `src/mu_course/backends/` | Torch CPU/CUDA and cached Spark block operations |
+| `src/mu_course/partitioning.py` | Contiguous time ranges and validated projection reassembly |
+| `src/mu_course/routing.py`, `cli.py` | Explicit backend selection and doctor/kernel-check commands |
+| `tests/` | Numerical reference, partition boundaries, lifecycle and CLI checks |
 
-No MU CLI or decomposition implementation exists yet.
+The installable `mu-decomp` CLI exposes doctor and kernel-check. No private CKC engine,
+real-data run command or MU decomposition implementation is included.
 
 ## Intended computation
 

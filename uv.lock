@@ -441,8 +441,8 @@ wheels = [
 
 [[package]]
 name = "spark-mu-course"
-version = "0.0.1"
-source = { virtual = "." }
+version = "0.1.0"
+source = { editable = "." }
 dependencies = [
     { name = "h5py", marker = "(platform_machine == 'x86_64' and sys_platform == 'linux') or (platform_machine != 'x86_64' and extra == 'extra-15-spark-mu-course-cpu' and extra == 'extra-15-spark-mu-course-gpu') or (sys_platform != 'linux' and extra == 'extra-15-spark-mu-course-cpu' and extra == 'extra-15-spark-mu-course-gpu')" },
     { name = "numpy", marker = "(platform_machine == 'x86_64' and sys_platform == 'linux') or (platform_machine != 'x86_64' and extra == 'extra-15-spark-mu-course-cpu' and extra == 'extra-15-spark-mu-course-gpu') or (sys_platform != 'linux' and extra == 'extra-15-spark-mu-course-cpu' and extra == 'extra-15-spark-mu-course-gpu')" },

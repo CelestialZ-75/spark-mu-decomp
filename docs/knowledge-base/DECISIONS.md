@@ -1,5 +1,16 @@
 # Decisions
 
+## 2026-10-05 — Public generic matrix backend contract
+
+Status: Implemented; validation tracked in KNOWLEDGE.md.
+
+Publish generic correlation, projection and weighted-sum operations behind one protocol.
+These standard linear algebra primitives contain no CKC candidate/update/acceptance policy.
+Private core integration remains separate. Return host NumPy arrays consistently, including
+CUDA transfer/synchronization costs; retain driver input and weights in this small-data version.
+Spark caches contiguous time blocks, reduces unnormalized contributions, then applies the
+global sample count. Session ownership stays with the caller; backends release only their data.
+
 ## 2026-10-04 — Staged WSL and Compose environment
 
 Status: Accepted as preparation route; runtime acceptance remains pending.
