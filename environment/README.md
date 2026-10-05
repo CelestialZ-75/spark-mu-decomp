@@ -28,6 +28,10 @@ CPU/GPU extra 二选一。WSL 使用 Windows NVIDIA 驱动，不另装 Linux 显
 `nvidia-smi` 能看到显卡后，还要运行 GPU 算例确认实际 CUDA 计算。
 bootstrap 使用项目 uv 0.11.19 和现有锁文件，后续按运行需要调整依赖即可。
 
+gpu extra 安装 CUDA 版 Torch；同一个环境仍可以选择 `--backend cpu` 或 `spark`。
+完整 MU 实验使用 `--backend gpu`，实际设备和显存记录在 `parameters.json`。
+计时前后等待 CUDA 完成，不将初次下载和依赖安装时间计入实验。
+
 ## Docker 双 worker 演示
 
 安装并启动 Docker Desktop，在设置中启用 WSL2 engine 与 Ubuntu integration。

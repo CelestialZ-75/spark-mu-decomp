@@ -83,9 +83,14 @@ def run_experiment(args):
     emg = load_emg(args.data, args.fsamp, args.start, args.duration, args.adapter)
     device = "cuda" if args.backend == "gpu" else "cpu"
     if device == "cuda":
+        # Keep float32 matmul precision comparable with the CPU reference.
+        torch.set_float32_matmul_precision("highest")
         torch.cuda.synchronize()
+        torch.cuda.reset_peak_memory_stats()
     total_start = perf_counter()
     extended = CKCExtender(args.ext_factor, device=device).extend(emg)
+    if extended.device.type != device:
+        raise RuntimeError(f"Requested {device}, but extension ran on {extended.device}")
     if extended.shape[1] <= args.ext_factor * 20:
         raise ValueError("The interval is too short for the algorithm's edge exclusion")
     model = CKCDecomposer(
@@ -130,8 +135,17 @@ def run_experiment(args):
         if device == "cuda":
             torch.cuda.synchronize()
         fit_seconds = perf_counter() - start
+        if model._inv_corr_sig.device.type != device:
+            raise RuntimeError("Correlation calculation ran on an unexpected device")
         report = {
             "backend": args.backend,
+            "device": str(extended.device),
+            "device_name": torch.cuda.get_device_name() if device == "cuda" else "CPU",
+            "torch_version": torch.__version__,
+            "cuda_version": torch.version.cuda if device == "cuda" else None,
+            "peak_gpu_memory_mib": (
+                torch.cuda.max_memory_allocated() / 1024**2 if device == "cuda" else None
+            ),
             "shape": list(emg.shape),
             "mu_count": model.mu_count,
             "fit_seconds": fit_seconds,

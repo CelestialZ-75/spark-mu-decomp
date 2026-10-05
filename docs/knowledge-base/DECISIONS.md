@@ -1,5 +1,17 @@
 # Decisions
 
+## 2026-10-05 — Validate native CUDA with the existing loop
+
+Status: Implemented and verified on the actual GPU.
+
+Use the original Torch GPU operations through `--backend gpu`, without another backend class
+or custom CUDA kernels. This stage uses highest float32 matmul precision for the CPU comparison.
+Check actual tensor devices, synchronize timing and save device/runtime/peak allocated memory.
+The existing CPU peak-detection and quality helpers are retained.
+
+Nine tests passed and the same small real input produced matching CPU/GPU MU pulses across
+three recorded repetitions. GPU containers and Spark GPU scheduling remain outside this stage.
+
 ## 2026-10-05 — Keep this a small course experiment
 
 Status: User approved; four experiment modules implemented.
@@ -23,9 +35,9 @@ Status: Historical implementation; no longer the required integration interface.
 
 The early implementation put correlation, projection and weighted-sum operations behind
 a protocol and returned host NumPy arrays. It does not implement CKC control logic.
-Spark caches time blocks and combines their contributions. These remain current code facts,
-but the interface may be removed during simplification. In particular, NumPy returns should
-not force GPU-to-CPU transfers at every step of the original Torch algorithm.
+Spark cached time blocks and combined their contributions. The protocol and NumPy-returning
+GPU interface were subsequently removed. The original Torch CPU/GPU loop now keeps its
+iteration tensors on the selected device.
 
 ## 2026-10-04 — Staged WSL and Compose environment
 

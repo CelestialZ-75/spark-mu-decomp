@@ -27,6 +27,11 @@ Spark 路径需要私有 `fit(eSig, ops=None)` 的少量算子接入改动，见
 GPU 不可用时会报错。`python -m mu_course --help` 可以查看全部参数，默认值集中在
 `src/mu_course/run_experiment.py` 的 `experiment_parser()` 中。
 
+运行 GPU 前先执行 `bash scripts/bootstrap_wsl.sh gpu`。这个环境也能运行 CPU 和 Spark，
+不需要在每次比较时切换安装选项。结果记录实际 device、显卡名称、Torch/CUDA 版本和
+本次运行的 PyTorch 峰值分配显存。GPU 矩阵计算使用完整 float32 精度，沿用原算法中
+部分在 CPU 上执行的峰值检测和质量判断。
+
 MAT 输入直接读取已滤波的 `emg_clean`，按 `good_channels` 选择指定的 64 通道阵列，
 不再次滤波，也不使用包络。NPY/NPZ 输入应已完成预处理，形状为 `[channels, samples]`，
 NPZ 默认键为 `emg`。时间参数相对于输入记录起点；adapter 从 0 开始编号。
@@ -52,8 +57,10 @@ CUDA 计时等待设备完成，Spark 算子等待 action。只运行已有环�
 先确认分解结果，再解释计时差异。Docker 双 worker 的运行仍需单独验证。
 
 当前已用真实两秒数据跑通 CPU 和 Spark local：各得到 4 个 MU，对应脉冲在
-±1 个采样点内一致。7 项测试、结果保存、绘图和 CPU 重复计时检查通过。
-真实 CUDA、Docker 双 worker 和正式三后端性能对照仍待完成。
+±1 个采样点内一致。CUDA 阶段也已完成：RTX 4070 Laptop GPU、Torch 2.8.0+cu128，
+同样输入三次均得到 4 个 MU，与 CPU 脉冲在 ±1 个采样点内一致。9 项测试通过。
+当前小样本 CPU/GPU 平均总计算耗时约 0.887/0.595 秒；这是本机这一组参数的阶段结果。
+Docker 双 worker 和完整三后端性能对照仍待完成。
 
 - [搭建顺序](SETUP_PLAN.md)
 - [Spark 算子与原算法接入](docs/BACKEND_CONTRACT.md)

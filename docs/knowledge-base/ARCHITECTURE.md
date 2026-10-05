@@ -44,5 +44,7 @@ Worker resources: one core each; application total two cores. Driver connects as
 Only loopback web UIs are published. Data is mounted read-only with separate output mounts.
 Run complete MU experiments in WSL/local first, then demonstrate two Docker workers.
 GPU containers and identical container conditions across all comparisons are optional.
-Local private algorithm integration is implemented. CUDA and Docker runtime remain pending;
-the smoke script continues to check the environment only.
+Local private algorithm integration and native WSL CUDA execution are verified. GPU math
+uses the original Torch loop with highest float32 matmul precision and synchronized timing.
+Device, runtime versions and peak allocated GPU memory are saved with each result.
+Docker runtime remains pending; the smoke script continues to check the environment only.

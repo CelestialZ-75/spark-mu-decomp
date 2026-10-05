@@ -35,7 +35,8 @@
 - Initial environment commit `a2e3896` was pushed; `main` tracks `origin/main`.
 - CPU tensor calculation and Spark `local[2]` smoke passed; two distinct Python worker processes
   executed the two partitions with matching Python/Torch versions. This is not two-host acceptance.
-- Ruff, Bash/Python syntax and TOML/YAML parsing passed. Docker runtime and CUDA tests remain pending.
+- Initial Ruff, Bash/Python syntax and TOML/YAML parsing passed. CUDA was subsequently
+  verified in the stage below; Docker runtime remains pending.
 - Local check artifacts are in ignored `outputs/environment/`.
 
 ## Earlier matrix implementation (historical)
@@ -72,14 +73,14 @@
   pulse trains agreed fully within one sample. Saved JSON/NPZ and both raster plots were checked.
 - CPU benchmark warm-up plus one recorded repeat completed; CSV and the mean timing plot worked.
   The formal three-repeat CPU/GPU/Spark comparison has not been run.
-- Seven current tests passed: float32/64 block math with 1/2/4 partitions and input slicing.
+- Nine current tests passed: float32/64 block math with 1/2/4 partitions, input slicing,
+  unavailable-GPU rejection and actual CUDA matrix operations. No CUDA test was skipped.
   Ruff passed; offline locked sync rebuilt the editable package and the new CLI help worked.
 - Parameters JSON and numeric NPZ are overwritten if the same output directory is reused.
   Total compute timing includes extension and Spark setup, excludes file I/O and cleanup.
 
 ## Next steps
 
-- Install the CUDA variant and run the same input on the actual GPU.
 - Demonstrate two Docker workers, mounting the private algorithm only on driver.
 - Run the three-backend comparison with warm-up and three repetitions; explain MU and timing differences.
 
@@ -97,3 +98,18 @@
 - Removed generic layers; implemented four experiment modules and small private operator hooks.
 - Seven tests passed, real CPU/Spark decomposition matched within one sample, and output/plot/
   repeat checks passed. CUDA and Docker remain pending. Local artifacts are under `outputs/minimal/`.
+
+## 2026-10-05 — Native CUDA stage
+
+- Project environment switched to Torch 2.8.0+cu128 with CUDA 12.8 using the existing locked
+  gpu extra. WSL confirmed RTX 4070 Laptop GPU. No system CUDA driver/toolkit was installed.
+- Reused the original GPU algorithm; added actual-device checks, highest float32 matmul
+  precision and report fields for device/runtime/peak allocated GPU memory. Existing CUDA
+  synchronization remains at timing boundaries. CPU-based peak/quality helpers remain as before.
+- All nine tests passed. CPU/GPU each warmed up once, then ran the same two-second, 63-channel
+  input three times with extension 10, five candidates, 30 iterations, cost 1 and SIL 0.8.
+- All runs yielded four MUs. One-to-one pulse matching agreed fully within one sample in
+  each paired run. Mean total compute time: CPU 0.887 s, GPU 0.595 s (about 1.49x).
+  GPU peak allocated memory was about 40.7 MiB. These numbers apply only to this local small sample.
+- Saved timing CSV, result comparison and inspected timing/raster plots in ignored
+  `outputs/cuda-stage/comparison/`. Full three-backend repeated comparison and Docker remain pending.
