@@ -1,76 +1,67 @@
-# WSL 与 Docker 环境
+# WSL 与 Docker 运行说明
 
-所有命令均在 Ubuntu 项目根目录执行。环境安装与实验分开；初次拉取较慢不计入性能。
+先在 WSL 跑通算法，再用 Docker 演示两个 worker。这里的环境命令和算例都不代表完整 MU 分解。
+命令在 Ubuntu 的项目根目录执行，首次安装耗时不计入实验。
 
-## WSL 原生环境
+## WSL 环境
 
-现有 Ubuntu 24.04 / WSL2 可复用，不重装、不修改全局 Python。正式实验应在 Linux
-文件系统建立 Git 工作副本，再重新生成环境；不能直接拷贝 Windows 或旧路径的 venv。
+复用现有 Ubuntu 24.04 / WSL2。依赖安装到项目环境，不修改全局 Python。
+正式计时尽量使用 Linux 文件系统中的项目副本，减少挂载盘读写影响；迁移后重新创建环境。
 
 ```bash
-# 系统 Java 尚缺时，终端里输入自己的 sudo 密码；不要把密码发到聊天。
+# 仅在缺少 Java 时执行
 sudo apt-get update
 sudo apt-get install -y openjdk-17-jre-headless
 java -version
 
-# 校验 uv 下载 SHA-256，依赖只写入 .tools、.cache、.venv-wsl
 bash scripts/bootstrap_wsl.sh cpu
 .venv-wsl/bin/python scripts/environment_smoke.py --backend cpu
 PYSPARK_PYTHON="$PWD/.venv-wsl/bin/python" \
     .venv-wsl/bin/python scripts/environment_smoke.py --backend spark
 
-# 替换为同版本 CUDA wheel；不会同时装 cpu/gpu 两个 extra
+# 需要 GPU 时切换安装选项
 bash scripts/bootstrap_wsl.sh gpu
 .venv-wsl/bin/python scripts/environment_smoke.py --backend gpu
 ```
 
-WSL 中沿用 Windows NVIDIA 驱动，不安装 Linux 显卡驱动。`nvidia-smi` 的 CUDA Version
-是驱动支持能力，不代表已安装同版本 Toolkit，也不决定必须选择同号 Torch wheel。
-Torch CUDA 12.8 wheel 自带所需用户态运行库；当前 GPU 是否可计算以实际 smoke 为准。
+CPU/GPU extra 二选一。WSL 使用 Windows NVIDIA 驱动，不另装 Linux 显卡驱动。
+`nvidia-smi` 能看到显卡后，还要运行 GPU 算例确认实际 CUDA 计算。
+bootstrap 使用项目 uv 0.11.19 和现有锁文件，后续按运行需要调整依赖即可。
 
-uv 固定为 0.11.19；依赖更新时使用项目 `.tools/uv-0.11.19/uv` 更新锁文件并重跑验证。
-bootstrap 使用 `--locked`，不会静默升级依赖。
+## Docker 双 worker 演示
 
-## Docker Desktop 路线
-
-先安装并启动 Docker Desktop for Windows，在设置中启用 WSL2 engine 和 Ubuntu
-integration。不要同时在 Ubuntu 内另装一套 Docker Engine。
-随后确认 Ubuntu 中 `docker version` 同时显示 client/server，`docker compose version` 正常。
+安装并启动 Docker Desktop，在设置中启用 WSL2 engine 与 Ubuntu integration。
+确认 Ubuntu 中 `docker version` 能连接服务，`docker compose version` 可以运行。
 
 ```bash
 mkdir -p data outputs
 docker compose -f environment/compose.yaml config --quiet
 docker compose -f environment/compose.yaml build
 docker compose -f environment/compose.yaml up -d master worker-1 worker-2
-# master UI 应显示两个 alive worker，再执行：
+# master UI 显示两个 worker 后执行
 docker compose -f environment/compose.yaml run --rm --use-aliases driver
-# 同容器 CPU 环境基线
-docker compose -f environment/compose.yaml run --rm --no-deps driver \
-    python scripts/environment_smoke.py --backend cpu
 docker compose -f environment/compose.yaml down
 ```
 
-`--use-aliases` 使临时 driver 容器以 `driver` 解析，executor 才能回连。
-Master UI 为 <http://localhost:8080>，worker UI 为 8081/8082，仅绑定本机。
-RPC 7077 不发布到宿主；各节点在内部网络通信。
+`--use-aliases` 让 executor 能通过 `driver` 地址回连临时容器。
+Master UI 在 <http://localhost:8080>，worker UI 在 8081/8082。
+当前 driver 默认执行环境求和算例，后续接入 MU 实验入口。
 
-检查输出 `partitions` 中出现 `worker-1`、`worker-2` 两个 host。脚本严格检查两容器
-参与，若刚启动时调度只落到一个 worker 会报错；检查 UI 注册状态后重跑，不降低验收标准。
-将来正式任务另保存 event log 和 executor 信息。
+查看输出是否出现 `worker-1`、`worker-2` 两个 host。若只有一个参与，先检查 UI 注册状态，
+再重跑；环境脚本在这种情况下会报错。课堂演示保留 UI 截图或任务输出即可，无需建设日志平台。
 
-每 worker 宣告 1 core、1 GiB executor 可分配内存；应用每 executor heap 512 MiB，
-driver heap 1 GiB，总 core 2。它们不是容器总内存限额，Python/native/JVM 还有额外开销。
-当前 Dockerfile 安装公共 CPU 依赖，未含私有核心和 GPU 支持。
-base image 目前固定版本系列而非 digest；验收后记录实际 image ID/digest。
+当前两个 worker 各使用 1 core，应用总 core 为 2，executor heap 为 512 MiB，driver heap 为 1 GiB。
+这些是 Spark 资源设置，Python 等进程还会占用额外内存。按小样本的实际需要调整即可。
+两个 worker 都位于同一台电脑。
 
-数据只读挂到所有节点 `/workspace/data`，输出挂到 `/workspace/outputs`。
-运行用户 UID 10001；正式写文件前需为输出目录设置相应属主或 ACL，不能用全局 777 解决。
-当前环境 smoke 仅写标准输出。GPU 容器作为后续一致环境验收项，参考
-[Compose GPU 配置](https://docs.docker.com/compose/how-tos/gpu-support/)。
+数据只读挂载到 `/workspace/data`，输出挂载到 `/workspace/outputs`。
+容器用户 UID 为 10001，遇到输出权限问题时调整该目录属主或权限。
+Docker 镜像目前只有公共 CPU 依赖，实际构建和双 worker 运行尚未验证。
+GPU 先在 WSL 中比较，GPU 容器不列为必做项。
 
-## 私有核心接入条件
+## 算法接入
 
-已有示例目录尚不能作为安装包引用。先独立打包、回归、冻结版本，之后再安装：
-开发环境使用授权本地包，镜像构建使用私有制品和校验哈希。
-当前 Docker 构建上下文采用白名单，不会自动包含 data、outputs、私有 wheel 或源码。
-不要把 token 放入 build args、镜像层、公开依赖 URL 或 Compose 配置。
+先让 driver 通过本地适配使用已有私有算法，worker 运行公开矩阵函数。
+无需先建立私有制品库或镜像发布流程。若容器确实需要私有代码，再通过本地挂载或安装接入。
+当前 Docker 构建上下文不包含私有源码、wheel、数据或实验输出。
+私有来源、真实数据和访问凭据继续留在本地。

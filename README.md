@@ -1,33 +1,31 @@
-# Spark MU course project
+# Spark MU 课程实验
 
-在小规模 HD-EMG 上实现单次 MU 分解内部的 Spark 并行，并对比 CPU、CUDA GPU
-和 Spark 的结果与成本。小数据上 Spark 较慢也属于有效实验结果。
+基于已有 MU 分解算法，在一小段肌电数据上比较 CPU、GPU 和 Spark 的结果与耗时。
+主要工作是将少量矩阵算子改成 Spark 分块计算，保留原算法主循环，并提供容易修改的实验参数。
+小数据下 Spark 较慢也属于有效结果。
 
-当前阶段：环境已完成 CPU/Spark local 验收；已实现统一矩阵后端和 CLI 检查入口。
-私有核心包与完整 MU 分解尚未接入。
+目前 WSL CPU、Spark local 和三个矩阵算子的检查已通过。完整 MU 算法尚未接入，
+真实 CUDA 与 Docker 双 worker 运行尚未验证。现有通用后端是早期算例，后续会按实验需要简化。
 
-- [分阶段搭建与验收](SETUP_PLAN.md)
-- [WSL / Docker 操作说明](environment/README.md)
-- [统一后端接口与数值验收](docs/BACKEND_CONTRACT.md)
-- [已核实状态](docs/knowledge-base/KNOWLEDGE.md)
+- [搭建顺序](SETUP_PLAN.md)
+- [WSL / Docker 运行说明](environment/README.md)
+- [当前矩阵算例说明](docs/BACKEND_CONTRACT.md)
+- [项目进度](docs/knowledge-base/KNOWLEDGE.md)
 
-原始完整课程计划保留在本地，不随公开仓库发布。
-
-公共依赖由 `pyproject.toml` 和 `uv.lock` 管理。Python 3.11，Java 17，
-PySpark 3.5.7；PyTorch 2.8.0 提供互斥的 CPU / CUDA 12.8 安装选项。
-该 Torch 版本是环境起点，仍需私有核心回归验证后才能冻结为正式实验版本。
+依赖使用 Python 3.11、Java 17、PySpark 3.5.7 和 PyTorch 2.8.0，
+由 `pyproject.toml`、`uv.lock` 管理。CPU 与 CUDA 安装选项二选一。
 
 ```bash
 # Ubuntu / WSL2，项目根目录
 bash scripts/bootstrap_wsl.sh cpu
 .venv-wsl/bin/python scripts/environment_smoke.py --backend cpu
-# Java 17 安装后
+# 需要 Java 17
 .venv-wsl/bin/python scripts/environment_smoke.py --backend spark
-# 已安装课程包后的统一入口
+
+# 当前矩阵算例，不是完整 MU 分解
 .venv-wsl/bin/mu-decomp kernel-check --backend cpu
 .venv-wsl/bin/mu-decomp kernel-check --backend spark --partitions 4
 ```
 
-原科研示例目前是源码，尚非独立 Python 包。公开仓库不包含其源码或真实数据；
-之后通过授权的私有 wheel 或固定 commit 包接入。环境检查只使用合成整数，
-不代表分解数值一致性或科学有效性验收。
+下一步先通过少量本地适配接入原算法，CPU 跑出结果后再接 GPU 和 Spark。
+私有算法、真实数据和本地实验输出不放入公开仓库。完整计划保留在本地。

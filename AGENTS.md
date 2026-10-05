@@ -7,6 +7,7 @@
 - Use Python 3.11 and uv; CPU and CUDA extras are mutually exclusive.
 - Keep private algorithm sources, wheels, real data, local paths and experimental
   logs out of public commits. Do not copy the research repository into this project.
-- Preserve the original course plan as a design reference; record implementation
-  status separately. Environment smoke checks are not MU decomposition acceptance.
+- Use the revised course plan as the implementation guide; keep the old plan only
+  as a local reference. Prefer a few experiment functions and simple parameters.
+  Record actual progress separately; environment smoke checks do not run MU decomposition.
 - Do not commit or push without user authorization. Never silently replace a remote.

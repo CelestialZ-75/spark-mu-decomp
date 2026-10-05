@@ -4,8 +4,9 @@
 
 - Repository instructions live in `AGENTS.md`; this directory stores durable facts.
 - Python 3.11, uv lock, explicit CPU/CUDA selection; no automatic GPU fallback.
-- Preserve the original course plan; use `SETUP_PLAN.md` for implementation stages.
-- Public repository holds orchestration, not private core sources or real data.
+- Follow the simplified local course plan and public `SETUP_PLAN.md`.
+- Prefer a small experiment wrapper, a few Spark operators and easy parameter changes.
+- Public repository holds experiment code, not private algorithm sources or real data.
 
 ## Verified environment
 
@@ -55,8 +56,18 @@
 
 ## Next steps
 
-- Install Docker Desktop through the documented path; validate the Compose runtime.
-- Validate CUDA and two-worker execution; freeze actual runtime/image versions.
-- Package private core separately with provenance and reference regression, then connect its
-  controller to the implemented matrix protocol; do not copy private policies into public backends.
-- Freeze one approved plateau input and algorithm policy before backend comparisons.
+- Use a small local adapter to run the existing MU algorithm on CPU; put common parameters
+  together in the experiment entry point. A separate private package is optional.
+- Run the same algorithm on GPU, then replace the three matrix operations with Spark functions.
+- Simplify the early protocol/factory/validation layers when integrating the algorithm.
+  Keep Torch tensors on their device during CPU/GPU iterations where possible.
+- Finish Spark local MU decomposition before the Docker two-worker demonstration.
+- Compare one input with the same parameters; save MU results, timings and a few plots.
+
+## 2026-10-05 — Documentation simplification
+
+- Rewrote the local root plan and aligned public docs with a small course experiment.
+- Removed private packaging, strict version/image freezing, complex artifacts and generic
+  backend architecture as prerequisites. The earlier long plan is backed up in ignored `.private/`.
+- This session changed documentation only. Existing source and previous check results remain
+  as recorded above; full MU integration, real CUDA and Docker execution are still pending.
