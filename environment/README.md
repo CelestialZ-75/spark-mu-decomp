@@ -45,7 +45,9 @@ docker compose -f environment/compose.yaml down
 
 `--use-aliases` 让 executor 能通过 `driver` 地址回连临时容器。
 Master UI 在 <http://localhost:8080>，worker UI 在 8081/8082。
-当前 driver 默认执行环境求和算例，后续接入 MU 实验入口。
+当前 driver 默认执行环境求和算例。完整 MU 入口已经实现，但容器还需要只在 driver
+挂载私有算法目录，并传入 `--core-dir` 和容器内的数据路径，再通过 `scripts/submit.py` 运行。
+公共镜像不包含私有算法，这一步尚未实际验证。
 
 查看输出是否出现 `worker-1`、`worker-2` 两个 host。若只有一个参与，先检查 UI 注册状态，
 再重跑；环境脚本在这种情况下会报错。课堂演示保留 UI 截图或任务输出即可，无需建设日志平台。

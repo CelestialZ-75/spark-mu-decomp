@@ -38,7 +38,7 @@
 - Ruff, Bash/Python syntax and TOML/YAML parsing passed. Docker runtime and CUDA tests remain pending.
 - Local check artifacts are in ignored `outputs/environment/`.
 
-## Architecture implementation
+## Earlier matrix implementation (historical)
 
 - Installable course package 0.1.0 exposes `mu-decomp doctor` and `kernel-check`.
 - CPU/CUDA share TorchBackend. SparkBackend caches time blocks, broadcasts operands,
@@ -54,15 +54,34 @@
   Across the main and targeted runs, 27 distinct tests passed and 1 real-CUDA test was skipped.
   Ruff formatting/lint and Git whitespace checks passed. CUDA and Docker runtime remain unverified.
 
+## Current experiment implementation
+
+- Four modules implement Spark operators, experiment parameters/input/results, sequential
+  timing repetitions and plots. Protocol, routing, validation and backend classes were removed.
+- Native CPU/GPU call the existing algorithm directly. The local private fit method has
+  optional Spark operation calls (15 added / 6 removed lines); the private source is not copied
+  or committed here. Workers need only public NumPy operations.
+- MAT input uses Stage 3 `emg_clean` and good channels in one adapter, without filtering again.
+  The inspected older recording lacked this field; a newer locally available Trapezoid trial
+  was selected instead. Exact source/data paths and commands are in ignored `.private/LOCAL_EXPERIMENT.md`.
+- Confirmed parameters from source knowledge/config: 2048 Hz, extension 10, cost function 1,
+  SIL 0.8, sync-time plateaus [3,9), [13,19), [23,29) seconds.
+- A two-second, 63-channel CPU run produced four MUs after deduplication with five candidates
+  and 30 iterations. This is an integration check, not a formal speed or physiological claim.
+- Spark local[2] with the same data and parameters also produced four MUs. The four corresponding
+  pulse trains agreed fully within one sample. Saved JSON/NPZ and both raster plots were checked.
+- CPU benchmark warm-up plus one recorded repeat completed; CSV and the mean timing plot worked.
+  The formal three-repeat CPU/GPU/Spark comparison has not been run.
+- Seven current tests passed: float32/64 block math with 1/2/4 partitions and input slicing.
+  Ruff passed; offline locked sync rebuilt the editable package and the new CLI help worked.
+- Parameters JSON and numeric NPZ are overwritten if the same output directory is reused.
+  Total compute timing includes extension and Spark setup, excludes file I/O and cleanup.
+
 ## Next steps
 
-- Use a small local adapter to run the existing MU algorithm on CPU; put common parameters
-  together in the experiment entry point. A separate private package is optional.
-- Run the same algorithm on GPU, then replace the three matrix operations with Spark functions.
-- Simplify the early protocol/factory/validation layers when integrating the algorithm.
-  Keep Torch tensors on their device during CPU/GPU iterations where possible.
-- Finish Spark local MU decomposition before the Docker two-worker demonstration.
-- Compare one input with the same parameters; save MU results, timings and a few plots.
+- Install the CUDA variant and run the same input on the actual GPU.
+- Demonstrate two Docker workers, mounting the private algorithm only on driver.
+- Run the three-backend comparison with warm-up and three repetitions; explain MU and timing differences.
 
 ## 2026-10-05 — Documentation simplification
 
@@ -71,3 +90,10 @@
   backend architecture as prerequisites. The earlier long plan is backed up in ignored `.private/`.
 - This session changed documentation only. Existing source and previous check results remain
   as recorded above; full MU integration, real CUDA and Docker execution are still pending.
+
+## 2026-10-05 — Minimal experiment implementation
+
+- Documentation baseline committed as `44d81b1`; the root full plan remains ignored locally.
+- Removed generic layers; implemented four experiment modules and small private operator hooks.
+- Seven tests passed, real CPU/Spark decomposition matched within one sample, and output/plot/
+  repeat checks passed. CUDA and Docker remain pending. Local artifacts are under `outputs/minimal/`.

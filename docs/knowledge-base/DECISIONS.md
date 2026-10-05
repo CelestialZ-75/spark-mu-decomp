@@ -2,7 +2,7 @@
 
 ## 2026-10-05 — Keep this a small course experiment
 
-Status: User approved; documents updated, source simplification pending.
+Status: User approved; four experiment modules implemented.
 
 Preserve the original MU main loop, use Torch device selection for CPU/GPU, and implement
 only the needed Spark block operators with PySpark. Keep parameters together in one entry
@@ -13,7 +13,9 @@ are not prerequisites. Run the original algorithm on CPU first, then GPU, Spark 
 the two-worker Docker demonstration. Numerical correctness and fair timing remain necessary.
 
 This decision replaces the earlier architecture requirements below. The original long plan
-is retained only as an ignored local backup. No source files changed in this documentation update.
+is retained only as an ignored local backup. A later implementation removed the generic layers
+and added optional Spark operation calls to the local private fit method. CPU/GPU keep native
+Torch operations; Spark workers use NumPy and return CPU tensors to the driver.
 
 ## 2026-10-05 — Public generic matrix backend contract
 

@@ -17,7 +17,7 @@ gpu = ["torch==2.8.0"]
 plots = ["matplotlib>=3.8,<4"]
 
 [project.scripts]
-mu-decomp = "mu_course.cli:main"
+mu-decomp = "mu_course.run_experiment:main"
 
 [build-system]
 requires = ["setuptools>=68"]

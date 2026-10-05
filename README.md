@@ -1,31 +1,60 @@
 # Spark MU 课程实验
 
-基于已有 MU 分解算法，在一小段肌电数据上比较 CPU、GPU 和 Spark 的结果与耗时。
-主要工作是将少量矩阵算子改成 Spark 分块计算，保留原算法主循环，并提供容易修改的实验参数。
-小数据下 Spark 较慢也属于有效结果。
+用同一小段肌电数据比较 CPU、GPU 和 Spark 的 MU 分解结果与耗时。
+沿用已有 CKC 主循环，CPU/GPU 使用原 PyTorch 计算，Spark 只替换三个矩阵算子。
 
-目前 WSL CPU、Spark local 和三个矩阵算子的检查已通过。完整 MU 算法尚未接入，
-真实 CUDA 与 Docker 双 worker 运行尚未验证。现有通用后端是早期算例，后续会按实验需要简化。
+## 运行一次实验
 
-- [搭建顺序](SETUP_PLAN.md)
-- [WSL / Docker 运行说明](environment/README.md)
-- [当前矩阵算例说明](docs/BACKEND_CONTRACT.md)
-- [项目进度](docs/knowledge-base/KNOWLEDGE.md)
-
-依赖使用 Python 3.11、Java 17、PySpark 3.5.7 和 PyTorch 2.8.0，
-由 `pyproject.toml`、`uv.lock` 管理。CPU 与 CUDA 安装选项二选一。
+先按 [环境说明](environment/README.md) 安装依赖。私有算法目录通过参数提供，
+需要含有 `ckc_decomposer.py`、`ckc_extender.py` 和 `ckc_preprocess.py`。
+Spark 路径需要私有 `fit(eSig, ops=None)` 的少量算子接入改动，见
+[算子说明](docs/BACKEND_CONTRACT.md)。公开仓库不包含私有算法与真实数据。
 
 ```bash
-# Ubuntu / WSL2，项目根目录
-bash scripts/bootstrap_wsl.sh cpu
-.venv-wsl/bin/python scripts/environment_smoke.py --backend cpu
-# 需要 Java 17
-.venv-wsl/bin/python scripts/environment_smoke.py --backend spark
+# Ubuntu / WSL，项目根目录；替换这两个本地路径
+.venv-wsl/bin/python -m mu_course \
+    --core-dir /path/to/private/mu-example \
+    --data /path/to/aligned_trial.mat \
+    --backend cpu --fsamp 2048 --start 3 --duration 2 --adapter 0 \
+    --ext-factor 10 --n-mu-max 5 --n-iter 30 \
+    --cost-fcn 1 --sil-threshold 0.8 --output outputs/cpu
 
-# 当前矩阵算例，不是完整 MU 分解
-.venv-wsl/bin/mu-decomp kernel-check --backend cpu
-.venv-wsl/bin/mu-decomp kernel-check --backend spark --partitions 4
+# 查看 MU 脉冲图
+.venv-wsl/bin/python -m mu_course.plot_results outputs/cpu
 ```
 
-下一步先通过少量本地适配接入原算法，CPU 跑出结果后再接 GPU 和 Spark。
-私有算法、真实数据和本地实验输出不放入公开仓库。完整计划保留在本地。
+换成 `--backend gpu` 使用 CUDA；换成 `--backend spark --partitions 2` 使用 Spark local。
+GPU 不可用时会报错。`python -m mu_course --help` 可以查看全部参数，默认值集中在
+`src/mu_course/run_experiment.py` 的 `experiment_parser()` 中。
+
+MAT 输入直接读取已滤波的 `emg_clean`，按 `good_channels` 选择指定的 64 通道阵列，
+不再次滤波，也不使用包络。NPY/NPZ 输入应已完成预处理，形状为 `[channels, samples]`，
+NPZ 默认键为 `emg`。时间参数相对于输入记录起点；adapter 从 0 开始编号。
+
+输出是 `parameters.json`、`mu_results.npz`。脉冲索引相对于扩展后的矩阵，绘图会补偿
+原 extender 裁掉的起始样本。同一个输出目录重跑会覆盖结果，需要保留时换目录。
+
+## 小规模对照
+
+```bash
+.venv-wsl/bin/python -m mu_course.benchmark \
+    --core-dir /path/to/private/mu-example --data /path/to/aligned_trial.mat \
+    --backends cpu gpu spark --repeat 3 --partition-counts 1 2 4 \
+    --start 3 --duration 2 --output outputs/comparison
+.venv-wsl/bin/python -m mu_course.plot_results outputs/comparison
+```
+
+每组先预热一次，再顺序运行三次。输出各次 MU 结果和 `timings.csv`，图中显示平均总计算耗时。
+总计算耗时包含扩展、Spark 启动/分发和分解，不含读取输入、保存文件及清理资源。
+CUDA 计时等待设备完成，Spark 算子等待 action。只运行已有环境时，可用 `--backends cpu spark`。
+
+没有 MU 时会保留结果并提示检查输入和参数。小数据下 Spark 慢也是有效结果；
+先确认分解结果，再解释计时差异。Docker 双 worker 的运行仍需单独验证。
+
+当前已用真实两秒数据跑通 CPU 和 Spark local：各得到 4 个 MU，对应脉冲在
+±1 个采样点内一致。7 项测试、结果保存、绘图和 CPU 重复计时检查通过。
+真实 CUDA、Docker 双 worker 和正式三后端性能对照仍待完成。
+
+- [搭建顺序](SETUP_PLAN.md)
+- [Spark 算子与原算法接入](docs/BACKEND_CONTRACT.md)
+- [当前进度](docs/knowledge-base/KNOWLEDGE.md)

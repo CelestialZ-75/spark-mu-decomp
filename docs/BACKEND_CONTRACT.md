@@ -1,41 +1,40 @@
-# 当前矩阵算例说明
+# Spark 算子与原算法接入
 
-本文描述已经实现的代码，方便查看和运行。它不再作为后续算法接入必须遵守的接口。
-完整 MU 分解尚未接入；后续优先保留原算法，以几个函数或小类封装 Spark 算子。
-
-## 算例做了什么
-
-输入 X 的形状是 `[features, samples]`，当前代码提供：
+当前只有一个小型 `SparkOps`，实现相关矩阵、投影和加权求和。
+原 CKC 主循环继续负责求逆、活动索引、候选选择、迭代和质量判断。
 
 | 方法 | 计算 |
 |---|---|
-| `prepare(X)` | 保存输入并转换成所选浮点类型 |
-| `correlation()` | `X @ X.T / N` |
-| `project(a)` | `a @ X`，输出按时间顺序排列 |
-| `weighted_sum(w)` | `X @ w` |
-| `synchronize()` | GPU 等待计算完成；Spark 方法已等待 action |
-| `close()` | 释放保存的数据，不停止外部 SparkSession |
+| `SparkOps(session, X, partitions)` | 按时间切块，缓存并执行一次 action |
+| `correlation()` | 各块计算 `X_i @ X_i.T`，求和后除以总 N |
+| `project(a)` | 广播 a，各块计算 `a @ X_i`，按起点拼接 |
+| `weighted_sum(w)` | 各块取对应权重，计算 `X_i @ w_i`，求和 |
+| `close()` | 释放块缓存 |
 
-CPU/GPU 使用 Torch，Spark 缓存连续时间块，用广播传递向量，用 treeReduce 合并块贡献。
-相关矩阵只在全局求和后除以 N。投影按块起点排序后拼接。
+worker 使用 NumPy 矩阵计算，输出转成 driver 上的 CPU Torch 张量。
+CPU/GPU 沿用原算法，不经过这个转换，迭代张量保留在所选设备。
+Spark driver 持有完整输入，小数据版本不处理超单机内存问题。
 
-当前接口都返回 NumPy 数组，因此 GPU 每次返回会发生设备到 CPU 的传输。
-接入 MU 迭代时应重新处理这一点，尽量沿用原算法的设备张量，避免来回传输。
-现有协议、工厂和验证层可以随代码简化，不要求继续扩展。
+## 私有算法中的少量改动
 
-## 运行已有检查
+课程入口通过 `--core-dir` 导入本地已有代码。为了共用同一个主循环，
+私有 `CKCDecomposer.fit` 增加可选 `ops=None` 参数，只调整以下位置：
+
+- 相关矩阵：ops 为空时执行原计算，否则调用 `ops.correlation()`。
+- 三处投影：先算 `a = c_tx @ inv_corr_sig`，再执行原投影或 `ops.project(a)`。
+- 梯度加权求和：原路径保持原计算；Spark 路径将边缘之外的权重置零，再调用 `ops.weighted_sum()`。
+
+未传 ops 时保留原 CPU/GPU 行为。Spark 不需要在 worker 安装私有算法。
+这些本地接入改动不包含在公开仓库中，换一份私有源码时也要加入相同调用点。
+
+## 检查
 
 ```bash
-.venv-wsl/bin/mu-decomp kernel-check --backend cpu
-.venv-wsl/bin/mu-decomp kernel-check --backend spark --partitions 4
 .venv-wsl/bin/pytest -q
 ```
 
-检查比较三个算子与 NumPy 直接计算的结果，也覆盖不均匀分块等情况。
-当前 float64 容差为 rtol=1e-8、atol=1e-10，float32 为 rtol=1e-4、atol=1e-5。
-`--backend gpu` 需要安装 gpu extra 并有实际可用的 CUDA，不会自动改用 CPU。
+数值检查覆盖 float32/64、1/2/4 分区、不均匀分块、全局归一化、
+投影顺序和边缘权重屏蔽。另检查输入片段选择。
+完整 MU 结果还要查看脉冲和质量指标，浮点归约顺序可能影响迭代与阈值判断。
 
-CLI 还保留 `doctor`、JSON 输出和运行信息检查，这些是已有功能，后续不必复制到实验入口。
-任务记录按块保存，记录数不等于 worker 数；local 模式也不等于双 worker 容器运行。
-
-下一步先跑出原算法的 CPU 结果，再逐个替换算子。矩阵检查通过不能替代完整 MU 实验。
+环境算例仍由 `scripts/environment_smoke.py` 提供，旧 doctor/kernel-check 入口已移除。

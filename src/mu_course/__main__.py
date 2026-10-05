@@ -1,3 +1,3 @@
-from mu_course.cli import main
+from mu_course.run_experiment import main
 
 raise SystemExit(main())
