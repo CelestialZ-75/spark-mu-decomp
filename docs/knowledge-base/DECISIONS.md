@@ -1,5 +1,18 @@
 # Decisions
 
+## 2026-10-10 — Track all course code and documents in the private repository
+
+Status: User authorized committing and pushing.
+
+The user changed the GitHub repository to private and requested that all code and documents
+in this checkout be versioned. Include the root plan, local instructions, source-reference
+metadata, inspection/validation scripts and the historical long-plan backup. This replaces
+the earlier local-only treatment of these files. The backup remains a historical reference.
+
+Credentials, installed environments, caches, real data and generated results remain excluded.
+The external research repository is not copied or committed here. Partial open source is a
+later decision, with a separate review of the selected files and history.
+
 ## 2026-10-05 — Validate native CUDA with the existing loop
 
 Status: Implemented and verified on the actual GPU.

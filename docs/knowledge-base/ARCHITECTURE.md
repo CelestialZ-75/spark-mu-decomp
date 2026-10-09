@@ -10,6 +10,8 @@
 | `environment/Dockerfile` | Shared non-root CPU runtime image |
 | `environment/compose.yaml` | Isolated master, two workers and client-mode driver |
 | `SETUP_PLAN.md` | Short sequence for running and comparing course experiments |
+| `SPARK_MU_COURSE_PROJECT_PLAN.md` | Full current course plan, tracked in the private repository |
+| `.private/` | Local instructions, validation scripts, source reference and archived original plan |
 | `src/mu_course/spark_ops.py` | Three cached time-block operations with NumPy on workers |
 | `src/mu_course/run_experiment.py` | Parameters, local algorithm import, input selection and results |
 | `src/mu_course/benchmark.py` | Sequential warm-up/repeats and timing CSV |

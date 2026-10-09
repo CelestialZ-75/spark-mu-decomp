@@ -5,8 +5,10 @@
 - Follow the user's shared operating rules and applicable skills.
 - Python uses PEP 8, snake_case functions, four spaces, and explicit device selection.
 - Use Python 3.11 and uv; CPU and CUDA extras are mutually exclusive.
-- Keep private algorithm sources, wheels, real data, local paths and experimental
-  logs out of public commits. Do not copy the research repository into this project.
+- The repository is currently private. Track project code, plans, local experiment
+  notes and validation scripts. Keep credentials, environments, caches, real data,
+  wheels and experiment outputs out of Git. Do not copy the research repository
+  wholesale. Review tracked content separately before any future public release.
 - Use the revised course plan as the implementation guide; keep the old plan only
   as a local reference. Prefer a few experiment functions and simple parameters.
   Record actual progress separately; environment smoke checks do not run MU decomposition.

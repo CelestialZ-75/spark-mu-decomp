@@ -8,7 +8,8 @@
 先按 [环境说明](environment/README.md) 安装依赖。私有算法目录通过参数提供，
 需要含有 `ckc_decomposer.py`、`ckc_extender.py` 和 `ckc_preprocess.py`。
 Spark 路径需要私有 `fit(eSig, ops=None)` 的少量算子接入改动，见
-[算子说明](docs/BACKEND_CONTRACT.md)。公开仓库不包含私有算法与真实数据。
+[算子说明](docs/BACKEND_CONTRACT.md)。本仓库目前设为 private，包含课程代码、计划和
+本地实验说明；原算法仍通过外部目录引用，真实数据和实验输出不纳入 Git。
 
 ```bash
 # Ubuntu / WSL，项目根目录；替换这两个本地路径
@@ -65,3 +66,9 @@ Docker 双 worker 和完整三后端性能对照仍待完成。
 - [搭建顺序](SETUP_PLAN.md)
 - [Spark 算子与原算法接入](docs/BACKEND_CONTRACT.md)
 - [当前进度](docs/knowledge-base/KNOWLEDGE.md)
+- [完整课程计划](SPARK_MU_COURSE_PROJECT_PLAN.md)
+- [本地数据路径与运行命令](.private/LOCAL_EXPERIMENT.md)
+
+`.private/` 中的检查脚本保留当前机器的路径，其他机器运行前需要调整。
+长版计划备份仅供历史参考，当前实施以根目录简化计划为准。之后考虑部分开源时，
+再单独审阅本地路径、科研来源说明和历史文档。

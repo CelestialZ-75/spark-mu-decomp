@@ -6,7 +6,8 @@
 - Python 3.11, uv lock, explicit CPU/CUDA selection; no automatic GPU fallback.
 - Follow the simplified local course plan and public `SETUP_PLAN.md`.
 - Prefer a small experiment wrapper, a few Spark operators and easy parameter changes.
-- Public repository holds experiment code, not private algorithm sources or real data.
+- Repository is private. Track course code, full plans, local experiment notes and
+  validation scripts. Keep external algorithm sources, real data, outputs and credentials local.
 
 ## Verified environment
 
@@ -64,7 +65,7 @@
   or committed here. Workers need only public NumPy operations.
 - MAT input uses Stage 3 `emg_clean` and good channels in one adapter, without filtering again.
   The inspected older recording lacked this field; a newer locally available Trapezoid trial
-  was selected instead. Exact source/data paths and commands are in ignored `.private/LOCAL_EXPERIMENT.md`.
+  was selected instead. Exact source/data paths and commands are in `.private/LOCAL_EXPERIMENT.md`.
 - Confirmed parameters from source knowledge/config: 2048 Hz, extension 10, cost function 1,
   SIL 0.8, sync-time plateaus [3,9), [13,19), [23,29) seconds.
 - A two-second, 63-channel CPU run produced four MUs after deduplication with five candidates
@@ -83,6 +84,17 @@
 
 - Demonstrate two Docker workers, mounting the private algorithm only on driver.
 - Run the three-backend comparison with warm-up and three repetitions; explain MU and timing differences.
+
+## 2026-10-10 — Private repository content
+
+- User confirmed that the remote repository is private and authorized committing/pushing all
+  course code and documents. Anonymous GitHub API lookup returned 404; SSH access succeeded.
+- Track the current root plan and `.private/` notes, scripts, source-reference snapshot and
+  historical plan backup. The backup is not the active implementation checklist.
+- Keep credentials, installed runtimes/environments, caches, real data and generated outputs
+  excluded. External FingerForce_Decode changes are outside this repository's commit scope.
+- Static syntax checks passed for all 15 project/local Python files; current document links,
+  code fences and Git whitespace checks passed. No computation logic changed in this task.
 
 ## 2026-10-05 — Documentation simplification
 

@@ -4,7 +4,10 @@
 cache/
 data/
 outputs/
-.private/
+.private/*
+!.private/*.md
+!.private/*.py
+!.private/source_reference.json
 private/
 wheelhouse/
 *.whl
@@ -22,4 +25,3 @@ spark-events/
 metastore_db/
 derby.log
 *.log
-SPARK_MU_COURSE_PROJECT_PLAN.md
