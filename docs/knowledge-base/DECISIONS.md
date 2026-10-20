@@ -1,5 +1,29 @@
 # Decisions
 
+## 2026-10-20 — Resource-constrained simulation and CPU prediction
+
+Status: User premise recorded; documentation reorganized. Runtime additions pending.
+
+Use one physical machine to simulate resource-constrained Spark nodes. Small real EMG trials
+serve this experiment; dataset size alone is not a reason to abandon Spark. Measure resource
+allocation, task partitioning and communication. Do not claim validated multi-server or
+out-of-core capability: the MU driver still retains the complete input.
+
+ML is CPU-only, with LDX 0° one training and one test trial. GPU remains an existing MU
+optimization reference. The working plan is RMS + MLlib Ridge and MU + MLlib GBT;
+MU + Ridge is a suggested control. Transformer and prediction intervals are optional.
+Exact trial pairing, resource quotas and optional extensions remain unconfirmed.
+
+Docker changes from a final demonstration to the planned resource-experiment environment.
+Add actual CPU/memory limits and a comparable CPU baseline; current Compose has neither.
+Compare added per-node resources separately from fixed worker-budget redistribution, and
+account for driver/master resources. This supersedes the optional-container-baseline
+treatment in the older entries below.
+
+Keep simple functions, centralized parameters and explicit input/output semantics.
+Conventions and team work packages live in ../DEVELOPMENT.md. No new framework, prediction
+source, quota configuration or runtime verification was added in this documentation task.
+
 ## 2026-10-10 — Track all course code and documents in the private repository
 
 Status: User authorized committing and pushing.
@@ -38,7 +62,8 @@ are not prerequisites. Run the original algorithm on CPU first, then GPU, Spark 
 the two-worker Docker demonstration. Numerical correctness and fair timing remain necessary.
 
 This decision replaces the earlier architecture requirements below. The original long plan
-is retained only as an ignored local backup. A later implementation removed the generic layers
+was initially an ignored local backup; the 2026-10-10 decision brought it into version control.
+A later implementation removed the generic layers
 and added optional Spark operation calls to the local private fit method. CPU/GPU keep native
 Torch operations; Spark workers use NumPy and return CPU tensors to the driver.
 

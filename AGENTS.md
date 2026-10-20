@@ -13,3 +13,9 @@
   as a local reference. Prefer a few experiment functions and simple parameters.
   Record actual progress separately; environment smoke checks do not run MU decomposition.
 - Do not commit or push without user authorization. Never silently replace a remote.
+- Prefer simple, readable experiment code that runs from a short command. Keep
+  parameters together; document shapes, units, time bases and output fields.
+  Reuse the original algorithm and Spark/MLlib rather than building a framework.
+- Resource-constrained single-host cluster simulation is the experiment premise.
+  ML is CPU-only; GPU is a MU reference only. Distinguish implemented, historically
+  verified and planned work. Development conventions live in `docs/DEVELOPMENT.md`.
