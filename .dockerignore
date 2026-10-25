@@ -4,6 +4,7 @@
 !scripts/
 !scripts/environment_smoke.py
 !scripts/submit.py
+!scripts/plot_example_data.py
 !src/
 !src/**
 !environment/

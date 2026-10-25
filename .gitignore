@@ -3,6 +3,10 @@
 .cache/
 cache/
 data/
+!src/mu_course/data/
+!src/mu_course/data/*.npz
+!src/mu_course/data/*.json
+!src/mu_course/data/*.md
 outputs/
 .private/*
 !.private/*.md

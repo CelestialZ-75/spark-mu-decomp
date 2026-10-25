@@ -50,9 +50,8 @@ docker compose -f environment/compose.yaml down
 
 `--use-aliases` 让 executor 能通过 `driver` 地址回连临时容器。
 Master UI 在 <http://localhost:8080>，worker UI 在 8081/8082。
-当前 driver 默认执行环境求和算例。完整 MU 入口已经实现，但容器还需要只在 driver
-挂载私有算法目录，并传入 `--core-dir` 和容器内的数据路径，再通过 `scripts/submit.py` 运行。
-公共镜像不包含私有算法，这一步尚未实际验证。
+当前 driver 默认执行环境求和算例。镜像通过 src/ 安装内置 CKC 与两份授权示例数据，
+不需要外部算法挂载。真实双 worker MU 仍待验证，不能把环境算例当作完成。
 
 查看输出是否出现 `worker-1`、`worker-2` 两个 host。若只有一个参与，先检查 UI 注册状态，
 再重跑；环境脚本在这种情况下会报错。课堂演示保留 UI 截图或任务输出即可，无需建设日志平台。
@@ -64,20 +63,26 @@ Master UI 在 <http://localhost:8080>，worker UI 在 8081/8082。
 
 数据只读挂载到 `/workspace/data`，输出挂载到 `/workspace/outputs`。
 容器用户 UID 为 10001，遇到输出权限问题时调整该目录属主或权限。
-Docker 镜像目前只有公共 CPU 依赖，实际构建和双 worker 运行尚未验证。
+Dockerfile 安装 CPU 与绘图依赖，包含内置算法和数据；实际构建和双 worker 运行尚未验证。
 GPU 先在 WSL 中比较，GPU 容器不列为必做项。
 
-## 算法接入
+## 独立 CPU 容器
 
-先让 driver 通过本地适配使用已有私有算法，worker 运行公开矩阵函数。
-无需先建立私有制品库或镜像发布流程。若容器确实需要私有代码，再通过本地挂载或安装接入。
-当前 Docker 构建上下文不包含私有源码、wheel、数据或实验输出。
-原算法源码、真实数据和访问凭据继续留在本地；课程仓库当前为 private。
+镜像构建后可运行下面的 CPU 命令。此命令用于队友环境，当前机器未验收 Docker 运行：
+
+```bash
+docker run --rm -v "$PWD/outputs:/workspace/outputs" spark-mu-course:dev \
+    python -m mu_course --backend cpu --output /workspace/outputs/cpu
+```
+
+算法与两份授权 EMG/力数据在 Python 包中，不依赖 /workspace/data。该挂载目录只用于自定义输入。
+构建上下文包括 src/ 内置代码/数据、锁文件和必要运行脚本，不包括其他研究数据、环境或凭据。
+仓库当前为 private，不能将含科研代码/数据的镜像视作已获准公开发布。
 
 ## 下一阶段资源配置（待实现）
 
 先给容器设置实际 CPU/内存额度，再匹配 Spark cores 与 executor memory。
-新增同 CPU 镜像的普通 CPU 基线，原算法只挂载到需要运行它的 driver/基线容器。
+新增同 CPU 镜像、指定额度的普通 CPU 基线，原算法和示例数据已经随包提供。
 当前文件尚无这些配置，不提供未验证的运行命令。
 
 分别测试每 worker 固定额度增加节点、固定 worker 总预算重新分配。

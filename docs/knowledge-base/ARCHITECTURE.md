@@ -1,11 +1,11 @@
 # 项目架构
 
-更新：2026-10-20。当前是少量 MU 实验代码；受限 Docker 实验与 CPU MLlib 预测是下一阶段。实现状态见 [知识库](KNOWLEDGE.md)。
+更新：2026-10-25。当前已内置 MU 算法和两份 EMG/力数据；受限 Docker 实验与 CPU MLlib 预测是下一阶段。实现状态见 [知识库](KNOWLEDGE.md)。
 
 ## 现有数据流
 
 ```text
-参数 + 已预处理 EMG + 外部原算法目录
+参数 + 内置 EMG/力试次 + 内置 CKC（可选外部覆盖）
   → run_experiment：选通道/片段，扩展矩阵
   → 原 CKC 主循环
       CPU/GPU：原 Torch 运算
@@ -24,7 +24,11 @@ benchmark：顺序预热和重复上述流程 → timings.csv → 耗时图
 
 | 路径 | 职责 |
 |---|---|
-| src/mu_course/run_experiment.py | CLI 参数、外部导入、输入、MU 调用、保存和计时 |
+| src/mu_course/run_experiment.py | CLI 参数、内置/可选外部算法、输入、MU 调用、保存和计时 |
+| src/mu_course/ckc/ | 内置分解、扩展、预处理、放电率编码与质量检查 |
+| src/mu_course/data/、dataset.py | 两份完整同步 EMG/力试次及轻量读取 |
+| scripts/plot_example_data.py | 查看内置 EMG 与力曲线 |
+| scripts/prepare_example_data.py | 维护者重新导出数据，队友运行无需源仓库 |
 | src/mu_course/spark_ops.py | 时间块缓存与三个 Spark 算子 |
 | src/mu_course/benchmark.py | 顺序预热、重复计时和 CSV |
 | src/mu_course/plot_results.py | 脉冲与平均耗时图 |
@@ -42,7 +46,7 @@ Python、uv、Java 17、PySpark 3.5.7、Torch 2.8.0 是现有技术栈。CPU/CUD
 
 WSL 用于本地开发与已有 CUDA 参考。Compose 已定义 master、worker-1、worker-2、client driver，共享 CPU 镜像和内部网络；数据只读、输出单独挂载，UI 仅发布到本机回环地址。
 
-当前 worker 各声明 1 core、1 GiB 可供 Spark 调度内存，executor heap 512 MiB、driver heap 1 GiB。这些不是容器硬限额。当前 driver 默认运行环境算例，未配置原算法挂载，没有普通 CPU 基线服务，实际构建与双 worker 运行仍待验证。
+当前 worker 各声明 1 core、1 GiB 可供 Spark 调度内存，executor heap 512 MiB、driver heap 1 GiB。这些不是容器硬限额。当前 driver 默认运行环境算例；原算法与示例数据现随包安装，无需外部挂载。没有普通 CPU 基线服务，实际构建与双 worker 运行仍待验证。
 
 后续增加容器硬限额和同环境 CPU 基线，分别比较增加 worker 总资源与固定 worker 总预算。driver/master 额度单独列出；分区数不等同于 worker 数。单机共享硬件不模拟真实跨服务器网络。
 

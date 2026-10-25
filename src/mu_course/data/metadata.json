@@ -1,0 +1,110 @@
+{
+  "fsamp": 2048,
+  "channel_ids": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    13,
+    14,
+    15,
+    16,
+    17,
+    18,
+    19,
+    20,
+    21,
+    22,
+    23,
+    24,
+    25,
+    26,
+    27,
+    28,
+    29,
+    30,
+    31,
+    32,
+    33,
+    34,
+    35,
+    36,
+    37,
+    38,
+    40,
+    41,
+    42,
+    43,
+    44,
+    45,
+    46,
+    48,
+    49,
+    50,
+    51,
+    52,
+    53,
+    54,
+    55,
+    56,
+    57,
+    58,
+    59,
+    60,
+    61,
+    62
+  ],
+  "channel_index_base": 0,
+  "emg_field": "emg_clean",
+  "force_channels": [
+    "Middle flexion",
+    "Middle extension"
+  ],
+  "force_unit": "g",
+  "flexion_mvc_g": 2220.267,
+  "time_origin": "Original aligned trial start; no time cropping or resampling",
+  "trials": [
+    {
+      "file": "ldx_0deg_1.npz",
+      "source": "processed_0831LDX/session0_1/aligned_Middle_Trapezoid.mat",
+      "source_sha256": "941ad423bd18f8aa879a7d170ab76d2b8f6490b00259235555bdff690fe05211",
+      "sha256": "29f5f3b22edf60592d97d6a7e4b32ff7b8e58495a2fc14e531684ad4f883271e",
+      "emg_shape": [
+        60,
+        63582
+      ],
+      "force_shape": [
+        2,
+        63582
+      ],
+      "force_field": "force_aligned",
+      "duration_seconds": 31.0458984375,
+      "bytes": 14647311
+    },
+    {
+      "file": "ldx_0deg_2.npz",
+      "source": "processed_0831LDX/session0_2/aligned_Middle_Trapezoid.mat",
+      "source_sha256": "07bd801a96adb80292f21d86135291b76f71e837a0a76722dd9c967771e2a10e",
+      "sha256": "cf8b8d22c412fd086e668585d255c6c15d21eeb4752f412ab5ec3783d5ea1be7",
+      "emg_shape": [
+        60,
+        63629
+      ],
+      "force_shape": [
+        2,
+        63629
+      ],
+      "force_field": "force_aligned",
+      "duration_seconds": 31.06884765625,
+      "bytes": 14647155
+    }
+  ]
+}

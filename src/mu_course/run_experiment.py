@@ -1,4 +1,4 @@
-"""Run the existing private MU algorithm with a few editable experiment parameters."""
+"""Run the bundled MU algorithm with a few editable experiment parameters."""
 
 import argparse
 import json
@@ -10,11 +10,13 @@ from time import perf_counter
 import numpy as np
 import torch
 
+from mu_course.dataset import DATA_DIR
+
 
 def experiment_parser():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--core-dir", type=Path, required=True)
-    parser.add_argument("--data", type=Path, required=True)
+    parser.add_argument("--core-dir", type=Path, help="Optional external CKC override")
+    parser.add_argument("--data", type=Path, default=DATA_DIR / "ldx_0deg_1.npz")
     parser.add_argument("--backend", choices=["cpu", "gpu", "spark"], default="cpu")
     parser.add_argument("--fsamp", type=int, default=2048)
     parser.add_argument("--start", type=float, default=3.0)
@@ -39,7 +41,7 @@ def load_emg(path: Path, fsamp: int, start: float, duration: float, adapter: int
     good = None
     if path.suffix == ".mat":
         # Reuse only the source loader, not its raw-signal filtering pipeline.
-        from ckc_preprocess import _load_mat
+        from mu_course.ckc.ckc_preprocess import _load_mat
 
         data = _load_mat(str(path))
         matrix = data["emg_clean"]
@@ -73,9 +75,13 @@ def run_experiment(args):
         raise ValueError("sil-threshold must be between 0 and 1")
     if args.backend == "gpu" and not torch.cuda.is_available():
         raise RuntimeError("CUDA is unavailable; install the gpu extra before running GPU")
-    sys.path.insert(0, str(args.core_dir.resolve()))
-    from ckc_decomposer import CKCDecomposer
-    from ckc_extender import CKCExtender
+    if args.core_dir is None:
+        from mu_course.ckc.ckc_decomposer import CKCDecomposer
+        from mu_course.ckc.ckc_extender import CKCExtender
+    else:
+        sys.path.insert(0, str(args.core_dir.resolve()))
+        from ckc_decomposer import CKCDecomposer
+        from ckc_extender import CKCExtender
 
     torch.set_num_threads(args.threads if args.backend != "spark" else 1)
     torch.manual_seed(args.seed)
@@ -167,7 +173,11 @@ def run_experiment(args):
             "seed": args.seed,
             "dtype": "float32",
             "data": str(args.data.resolve()),
-            "core_dir": str(args.core_dir.resolve()),
+            "core_dir": (
+                str(args.core_dir.resolve())
+                if args.core_dir
+                else str(Path(__file__).parent / "ckc")
+            ),
         }
         args.output.mkdir(parents=True, exist_ok=True)
         lengths = [len(pulses) for pulses in model.mu_pulses]

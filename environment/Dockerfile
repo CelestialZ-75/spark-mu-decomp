@@ -9,7 +9,7 @@ RUN apt-get update \
 WORKDIR /opt/mu-course
 COPY pyproject.toml uv.lock ./
 COPY src ./src
-RUN uv sync --locked --no-dev --extra cpu --no-editable
+RUN uv sync --locked --no-dev --extra cpu --extra plots --no-editable
 ENV PATH="/opt/mu-course/.venv/bin:$PATH" \
     SPARK_HOME="/opt/mu-course/.venv/lib/python3.11/site-packages/pyspark" \
     PYSPARK_PYTHON="/opt/mu-course/.venv/bin/python" \
@@ -17,6 +17,7 @@ ENV PATH="/opt/mu-course/.venv/bin:$PATH" \
     OMP_NUM_THREADS=1 MKL_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1
 COPY scripts/environment_smoke.py scripts/environment_smoke.py
 COPY scripts/submit.py scripts/submit.py
+COPY scripts/plot_example_data.py scripts/plot_example_data.py
 RUN useradd --create-home --uid 10001 course \
     && mkdir -p /workspace/data /workspace/outputs /tmp/spark-work \
     && chown -R course:course /workspace /tmp/spark-work

@@ -1,6 +1,6 @@
 # 开发说明
 
-更新：2026-10-20。进度以 [知识库](knowledge-base/KNOWLEDGE.md) 为准，范围见 [课程计划](../SPARK_MU_COURSE_PROJECT_PLAN.md)。
+更新：2026-10-25。进度以 [知识库](knowledge-base/KNOWLEDGE.md) 为准，范围见 [课程计划](../SPARK_MU_COURSE_PROJECT_PLAN.md)。
 
 ## 代码风格
 
@@ -21,7 +21,8 @@
 
 | 入口 | 输入 | 输出 |
 |---|---|---|
-| python -m mu_course / mu-decomp | --core-dir、--data，其余见 --help | run_experiment(args) 保存结果并返回报告字典 |
+| python -m mu_course / mu-decomp | 默认使用内置算法与数据，--core-dir/--data 可选，其余见 --help | run_experiment(args) 保存结果并返回报告字典 |
+| dataset.load_trial(path) | 内置 NPZ | 同步 EMG、力、采样率、通道和单位 |
 | load_emg(path, fsamp, start, duration, adapter) | 文件、采样率、片段和阵列 | float32 [channels, samples] |
 | SparkOps | CPU Torch 扩展矩阵、session、分区数 | CPU Torch 张量；见 [算子接口](BACKEND_CONTRACT.md) |
 | python -m mu_course.benchmark | MU 参数、--backends、--repeat、--partition-counts | 预热后顺序运行，保存逐次结果和 timings.csv |
@@ -57,7 +58,7 @@ MAT 必须含 emg_clean，按 good_channels 选一个 64 通道阵列。NPY/NPZ 
 
 | 工作包 | 输入 | 交付与验收 | 依赖 |
 |---|---|---|---|
-| 环境与调度 | 当前 Dockerfile/Compose、MU 入口 | CPU 基线和 1/2 worker 配置，真实限额、两节点参与记录、同输入结果 | Docker 可运行 |
+| 环境与调度 | 当前 Dockerfile/Compose、内置 MU/数据入口 | CPU 基线和 1/2 worker 配置，真实限额、两节点参与记录、同输入结果 | Docker 可运行 |
 | 数据与特征 | 原项目数据/读取函数、MU 代码 | 训练/测试 RMS 与 MU 表、时间/单位说明、训练模板 | 确认试次，补模板导出与应用 |
 | MLlib 与展示 | 特征表与上述约定 | Ridge/GBT 预测、指标、曲线、资源耗时表 | 可先用小样表接通，最终以真实特征验收 |
 
@@ -75,4 +76,4 @@ MAT 必须含 emg_clean，按 good_channels 选一个 64 通道阵列。NPY/NPZ 
 
 测试覆盖现有数值和输入问题，真实 MU 另用短片段检查。CUDA 检查实际设备并同步计时。Docker 环境算例与真实 MU 分开验收。仅改文档时检查链接与参数，不必重跑算法。
 
-用项目 uv 和锁文件维护 Python 3.11 环境，CPU/CUDA extras 二选一。真实数据、环境、缓存、凭据与输出不入 Git。提交和推送需用户授权。
+用项目 uv 和锁文件维护 Python 3.11 环境，CPU/CUDA extras 二选一。用户授权的两份 src/mu_course/data 精简试次随包提供；其他真实数据、环境、缓存、凭据与输出不入 Git。提交和推送需用户授权。

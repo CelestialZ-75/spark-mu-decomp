@@ -1,5 +1,20 @@
 # Decisions
 
+## 2026-10-25 — Bundle a standalone course example
+
+Status: User explicitly authorized the two named real trials for the private course repository.
+
+Bundle the five required CKC modules, with package-relative imports, and compact EMG/force
+exports from processed_0831LDX/session0_1 and session0_2/aligned_Middle_Trapezoid.mat.
+Keep full time trajectories, shared good channels in adapter 0 and aligned force; record
+source hashes and units. Include these assets in the Python wheel and Docker build context.
+Default commands use bundled assets; --core-dir and --data remain optional overrides.
+
+This supersedes the earlier requirement to keep all research code/data outside this repo.
+It is a narrow exception: do not copy the research repository wholesale or add other trials.
+It is not authorization to publish publicly, commit, push or distribute a public image.
+Prediction training and resource-quota experiments remain separate unfinished work.
+
 ## 2026-10-20 — Resource-constrained simulation and CPU prediction
 
 Status: User premise recorded; documentation reorganized. Runtime additions pending.

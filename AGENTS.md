@@ -6,9 +6,13 @@
 - Python uses PEP 8, snake_case functions, four spaces, and explicit device selection.
 - Use Python 3.11 and uv; CPU and CUDA extras are mutually exclusive.
 - The repository is currently private. Track project code, plans, local experiment
-  notes and validation scripts. Keep credentials, environments, caches, real data,
+  notes and validation scripts. Keep credentials, environments, caches, other real data,
   wheels and experiment outputs out of Git. Do not copy the research repository
   wholesale. Review tracked content separately before any future public release.
+- The user authorized two compact real EMG/force trials in `src/mu_course/data/`
+  and the required CKC modules in `src/mu_course/ckc/` for standalone team use.
+  These are the narrow exception to excluding research data/source; do not add
+  other trials or copy the research repository wholesale.
 - Use the revised course plan as the implementation guide; keep the old plan only
   as a local reference. Prefer a few experiment functions and simple parameters.
   Record actual progress separately; environment smoke checks do not run MU decomposition.

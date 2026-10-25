@@ -26,6 +26,9 @@ build-backend = "setuptools.build_meta"
 [tool.setuptools.packages.find]
 where = ["src"]
 
+[tool.setuptools.package-data]
+mu_course = ["data/*.npz", "data/*.json", "data/*.md", "ckc/*.md"]
+
 [dependency-groups]
 dev = ["pytest>=8,<9", "ruff>=0.11,<1"]
 
