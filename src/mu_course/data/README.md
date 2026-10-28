@@ -19,7 +19,7 @@ NPZ 字段：
 - trial_id：session0_1 或 session0_2；force_unit：g。
 - flexion_mvc_g：2220.267，来自原配置的中指屈曲 MVC。屈曲 %MVC = force[0] / flexion_mvc_g * 100，不据此归一化伸展力。
 
-时间 0 是原 aligned 试次起点。数据保留完整轨迹，MU 快速例子只取第 3–5 秒。计划中的一训一测配对仍应在预测实验前确定，不因文件名顺序自动成为最终实验结论。
+时间 0 是原 aligned 试次起点。数据保留完整轨迹，MU 快速例子只取第 3–5 秒。当前预测配置固定 session0_1 训练、session0_2 测试，使用同窗口中指屈曲力均值，单位 g。RMS／MU 的窗口、通道和标签对齐，具体见 [实操指南](../../../docs/START_HERE.md#step-7)。
 
 ```python
 from mu_course.dataset import DATA_DIR, load_trial

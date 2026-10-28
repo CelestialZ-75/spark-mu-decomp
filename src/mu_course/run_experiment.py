@@ -11,6 +11,7 @@ import numpy as np
 import torch
 
 from mu_course.dataset import DATA_DIR
+from mu_course.runtime_info import runtime_info
 
 
 def experiment_parser():
@@ -144,6 +145,7 @@ def run_experiment(args):
         if model._inv_corr_sig.device.type != device:
             raise RuntimeError("Correlation calculation ran on an unexpected device")
         report = {
+            "runtime": runtime_info(),
             "backend": args.backend,
             "device": str(extended.device),
             "device_name": torch.cuda.get_device_name() if device == "cuda" else "CPU",

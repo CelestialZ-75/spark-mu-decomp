@@ -1,1 +1,5 @@
 * text=auto eol=lf
+
+# Preserve source CSV bytes used by the report's SHA256 manifests.
+docs/report/results/*.csv -text
+docs/report/results/prediction-run-1/*/predictions.csv -text

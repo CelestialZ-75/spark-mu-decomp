@@ -1,14 +1,17 @@
 # 开发与实验顺序
 
-范围见 [课程计划](SPARK_MU_COURSE_PROJECT_PLAN.md)，进度见 [知识库](docs/knowledge-base/KNOWLEDGE.md)，接口与分工见 [开发说明](docs/DEVELOPMENT.md)。
+更新：2026-10-28。范围见 [课程计划](SPARK_MU_COURSE_PROJECT_PLAN.md)，具体操作按 [统一实操指南](docs/START_HERE.md)，验收证据集中在 [知识库](docs/knowledge-base/KNOWLEDGE.md)。
 
-1. 保留现有 CPU/CUDA/Spark local MU 流程。按 [运行说明](README.md) 先跑 CPU，确认内置算法、输入和参数。已有验证不等于换机器后自动可用。
-2. 按 [环境说明](environment/README.md) 验证 Docker。补容器 CPU/内存限额、同环境 CPU 基线；内置算法和数据已随包提供。先过环境算例，再运行真实 MU。
-3. 做 1/2 worker 对照：每节点固定额度、worker 总预算固定。记录 driver/master 额度。分区数另行调整，保存 worker 参与的任务记录。
-4. 确认 LDX 0° 训练/测试试次。复用原读取和特征函数，准备 RMS、固定 MU 模板特征和对应力标签。
-5. CPU MLlib 运行 RMS＋Ridge、MU＋GBT；补充 MU＋Ridge 时复用原函数。保存指标、预测曲线和分项耗时。
-6. 同配置预热一次、测三次，整理资源表、图和报告，解释计算与通信开销。
+| 顺序 | 工作 | 当前状态 |
+|---|---|---|
+| 1 | 内置数据、CPU 与 Spark local MU，已有 CUDA 参考 | 已实现；本轮 VMware local 已核对，CUDA 为历史验证 |
+| 2 | Docker 硬限额、同总额度 CPU 基线、两个 worker 参与 | 已实现并有真实运行和资源记录 |
+| 3 | 1／2 worker、固定预算和 1／2／4 分区对照 | 正式 MU 六组完成，24 次运行含六次预热 |
+| 4 | 第一试次训练、第二试次测试，RMS 与固定训练 MU 模板特征 | 已完成；通道、窗口、标签和模板对齐 |
+| 5 | CPU MLlib RMS＋Ridge、MU＋GBT，补充 MU＋Ridge | 单次验收与 local／standalone 正式对照完成 |
+| 6 | 每配置预热一次、正式三次，汇总耗时、误差与图表 | 完整批次 12 组、48 次运行、36 条正式记录已核对 |
+| 7 | 课程报告与交付 | 报告、七张配图和精选结果已整理到 docs/report；待复核、补作者信息及提交 |
 
-第 2–6 项尚未完成。当前 Compose 默认执行环境算例，未加硬限额；预测脚本尚不存在。不要把计划接口当作已实现命令。
+当前对照实操指南第 10 节复核已有报告初稿，无需重跑已成功的实验。源码、输入或资源条件发生变化时另建批次，保留原始结果。
 
-CUDA 只用于 MU 优化参考。ML 全程 CPU；Transformer、区间预测和网络限速暂不列为必做项。
+CUDA 只用于 MU 参考，ML 全程 CPU；Transformer、区间预测、网络限速和 HDFS 不列为当前必做项。

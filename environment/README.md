@@ -1,94 +1,43 @@
-# WSL 与 Docker 运行说明
+# Linux 与 Docker 环境说明
 
-WSL 用于开发和已有 CUDA 参考，Docker 用于单机模拟受限 CPU 集群。
-下列 Docker 命令目前只运行环境算例，不代表完整 MU 分解或资源对照已完成。
-命令在 Ubuntu 的项目根目录执行，首次安装耗时不计入实验。
+更新：2026-10-28。当前路线为 Windows 编辑 → VMware Ubuntu 运行 → Docker 模拟受限集群。VM 为 2 vCPU／6 GB；实际进度见 [知识库](../docs/knowledge-base/KNOWLEDGE.md)。SSH、代理、安装、权限、实验和回传命令统一维护在 [实操指南](../docs/START_HERE.md)，本页说明配置与运行边界。
 
-## WSL 环境
+## Python 与 Java
 
-复用现有 Ubuntu 24.04 / WSL2。依赖安装到项目环境，不修改全局 Python。
-正式计时尽量使用 Linux 文件系统中的项目副本，减少挂载盘读写影响；迁移后重新创建环境。
+需要 Linux x86_64、Python 3.11、Java 17，锁定依赖包括 Torch 2.8.0、PySpark 3.5.7。`scripts/bootstrap_wsl.sh cpu` 是普通 Linux 安装流程，VMware 也可使用；`.venv-wsl` 只是沿用的目录名。项目 uv、缓存和 Python 环境均位于仓库内，不修改系统 Python。
 
-```bash
-# 仅在缺少 Java 时执行
-sudo apt-get update
-sudo apt-get install -y openjdk-17-jre-headless
-java -version
+首次安装和当前 shell 的 Java／PySpark 变量见 [实操指南第 2 节](../docs/START_HERE.md#step-2)，以后重连见 [第 12 节](../docs/START_HERE.md#vm-resume)。安装和下载不计入正式实验时间。
 
-bash scripts/bootstrap_wsl.sh cpu
-.venv-wsl/bin/python scripts/environment_smoke.py --backend cpu
-PYSPARK_PYTHON="$PWD/.venv-wsl/bin/python" \
-    .venv-wsl/bin/python scripts/environment_smoke.py --backend spark
+WSL2 仍可用于 Linux 本地开发和历史 CUDA MU 参考。CPU／GPU extra 互斥；CUDA 版环境也可选择 CPU／Spark 后端。VMware 当前路线使用 CPU，不能因为 Windows 有显卡就假定 Ubuntu VM 有 CUDA。
 
-# 需要 GPU 时切换安装选项
-bash scripts/bootstrap_wsl.sh gpu
-.venv-wsl/bin/python scripts/environment_smoke.py --backend gpu
-```
+## Compose 文件的职责
 
-CPU/GPU extra 二选一。WSL 使用 Windows NVIDIA 驱动，不另装 Linux 显卡驱动。
-`nvidia-smi` 能看到显卡后，还要运行 GPU 算例确认实际 CUDA 计算。
-bootstrap 使用项目 uv 0.11.19 和现有锁文件，后续按运行需要调整依赖即可。
+- `compose.yaml` 定义 master、两个 worker 和 client driver；单独使用时没有容器硬限额，driver 默认只运行环境算例。
+- `compose.limits.yaml` 叠加 CPU／内存硬限额，并提供独立 `cpu` 服务。
+- `scripts/run_vm_stage.sh` 自动叠加两份文件，执行单次环境、真实 MU 和预测验收；正式重复使用 `scripts/run_formal_group.sh`，各次独立保存。
 
-gpu extra 安装 CUDA 版 Torch；同一个环境仍可以选择 `--backend cpu` 或 `spark`。
-完整 MU 实验使用 `--backend gpu`，实际设备和显存记录在 `parameters.json`。
-计时前后等待 CUDA 完成，不将初次下载和依赖安装时间计入实验。
+这两份配置及真实任务已在 Ubuntu 运行，原始结果已回传核对。复现时仍需验收自己的环境，环境算例通过不能代替真实 MU／预测检查。
 
-## 当前 Docker 双 worker 配置
+| 服务 | CPU 上限 | 内存硬上限 | 执行配置 |
+|---|---:|---:|---|
+| master | 0.25 | 384 MiB | daemon heap 128 MiB |
+| worker-1 | 0.5 | 1280 MiB | 一个任务槽，executor heap 512 MiB |
+| worker-2 | 0.5 | 1280 MiB | 同上 |
+| driver | 0.75 | 1792 MiB | 阶段／正式脚本提交时 heap 768 MiB |
+| CPU 基线 | 2 | 4736 MiB | 集群停止后独立运行，Torch 两线程 |
 
-安装并启动 Docker Desktop，在设置中启用 WSL2 engine 与 Ubuntu integration。
-确认 Ubuntu 中 `docker version` 能连接服务，`docker compose version` 可以运行。
+集群与 CPU 基线总上限均为 2 CPU／4736 MiB，服务划分和线程布局不同。`memswap_limit` 与内存上限相同，禁止容器额外使用 swap。基础 Compose 默认 driver heap 为 1 GiB，实际阶段脚本会覆盖为表中 768 MiB；不要把 Spark 堆内存或任务槽当成容器硬限额。
 
-```bash
-mkdir -p data outputs
-docker compose -f environment/compose.yaml config --quiet
-docker compose -f environment/compose.yaml build
-docker compose -f environment/compose.yaml up -d master worker-1 worker-2
-# master UI 显示两个 worker 后执行
-docker compose -f environment/compose.yaml run --rm --use-aliases driver
-docker compose -f environment/compose.yaml down
-```
+正式 MU 还比较 `one-half`、`one-full`、`two-p1/p2/p4`；其中单 worker 集中预算配置在批次 `config/one-full.yaml` 中生成。完整资源表、控制变量及脚本命令见 [第 9 节](../docs/START_HERE.md#formal-comparison)。
 
-`--use-aliases` 让 executor 能通过 `driver` 地址回连临时容器。
-Master UI 在 <http://localhost:8080>，worker UI 在 8081/8082。
-当前 driver 默认执行环境求和算例。镜像通过 src/ 安装内置 CKC 与两份授权示例数据，
-不需要外部算法挂载。真实双 worker MU 仍待验证，不能把环境算例当作完成。
+## 网络、挂载与输出
 
-查看输出是否出现 `worker-1`、`worker-2` 两个 host。若只有一个参与，先检查 UI 注册状态，
-再重跑；环境脚本在这种情况下会报错。课堂演示保留 UI 截图或任务输出即可，无需建设日志平台。
+Docker Engine 运行在 Ubuntu VM 内，复用已有安装；Windows 无需 Docker Desktop。WSL 用户选择 Docker Desktop 时，才需要相应 WSL integration。
 
-当前两个 worker 各使用 1 core，应用总 core 为 2，executor heap 为 512 MiB，driver heap 为 1 GiB。
-这些是 Spark 调度和堆内存设置，不是容器硬限额；Python 等进程还会占用额外内存。
-当前 Compose 没有 cpus/mem_limit，因此还没有实现受限资源实验。
-两个 worker 都位于同一台电脑。
+master／worker／driver 通过内部网络通信。Master UI 绑定 Ubuntu `127.0.0.1:8080`，两个 worker UI 的主机端口为 8081／8082；Windows 查看页面使用 [SSH 转发](../docs/START_HERE.md#vm-ui)。两个容器共享单台电脑，不代表两台物理服务器，也没有 HDFS 分布式存储。
 
-数据只读挂载到 `/workspace/data`，输出挂载到 `/workspace/outputs`。
-容器用户 UID 为 10001，遇到输出权限问题时调整该目录属主或权限。
-Dockerfile 安装 CPU 与绘图依赖，包含内置算法和数据；实际构建和双 worker 运行尚未验证。
-GPU 先在 WSL 中比较，GPU 容器不列为必做项。
+镜像内已安装 CKC 和两份授权数据，无需外部算法挂载。`data/` 只读挂载到 `/workspace/data`，供自定义输入；`outputs/` 挂载到 `/workspace/outputs`，保留各次结果。容器用户为 UID 10001，目录权限使用 [6.1 的 ACL 方法](../docs/START_HERE.md#step-6)。
 
-## 独立 CPU 容器
+Ubuntu shell、Docker daemon、构建容器的代理是不同配置层，具体排错见 [基础镜像下载代理](../docs/START_HERE.md#docker-pull-proxy)。构建成功后代码修改需重新构建镜像；仅编辑文档或宿主机结果检查脚本不需要重建。
 
-镜像构建后可运行下面的 CPU 命令。此命令用于队友环境，当前机器未验收 Docker 运行：
-
-```bash
-docker run --rm -v "$PWD/outputs:/workspace/outputs" spark-mu-course:dev \
-    python -m mu_course --backend cpu --output /workspace/outputs/cpu
-```
-
-算法与两份授权 EMG/力数据在 Python 包中，不依赖 /workspace/data。该挂载目录只用于自定义输入。
-构建上下文包括 src/ 内置代码/数据、锁文件和必要运行脚本，不包括其他研究数据、环境或凭据。
-仓库当前为 private，不能将含科研代码/数据的镜像视作已获准公开发布。
-
-## 下一阶段资源配置（待实现）
-
-先给容器设置实际 CPU/内存额度，再匹配 Spark cores 与 executor memory。
-新增同 CPU 镜像、指定额度的普通 CPU 基线，原算法和示例数据已经随包提供。
-当前文件尚无这些配置，不提供未验证的运行命令。
-
-分别测试每 worker 固定额度增加节点、固定 worker 总预算重新分配。
-driver/master 额度同时记录；未固定整套预算时，不写成固定系统总资源。
-先压缩 CPU，内存以能够稳定运行为起点，具体额度经过试运行再定。
-
-每组记录配置、worker 参与、结果和分项耗时，配置间顺序运行。
-节点数量和数据分区分别调整。单机共享主机不代表真实服务器网络，首版不加网络限速。
-GPU 仅保留 WSL MU 参考，预测全部 CPU。见 [课程计划](../SPARK_MU_COURSE_PROJECT_PLAN.md)。
+完整结果、环境和缓存默认不入 Git；用户选定用于提交的报告、配图与精选结果见 [交付目录](../docs/report/results/RESULTS_GUIDE.md)。含科研源码／数据的镜像供当前私有课程项目运行，公开发布需另行核对许可。

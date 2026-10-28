@@ -1,0 +1,57 @@
+{
+  "runtime": {
+    "host": "driver",
+    "python": "3.11.18",
+    "cgroup": {
+      "cpu.max": "75000 100000",
+      "memory.max": "1879048192",
+      "memory.swap.max": "0"
+    }
+  },
+  "model": "gbt",
+  "feature_kind": "mu",
+  "label_unit": "g",
+  "offline": true,
+  "rmse": 253.31604004679483,
+  "mae": 207.20440350655804,
+  "train_mean_baseline_rmse": 383.8528750019119,
+  "train_windows": 611,
+  "test_windows": 612,
+  "feature_count": 1,
+  "input_worker_hosts": [
+    "worker-1",
+    "worker-2"
+  ],
+  "master": "spark://master:7077",
+  "partitions": 2,
+  "seed": 42,
+  "spark_version": "3.5.7",
+  "startup_seconds": 6.435149934004585,
+  "distribution_seconds": 14.646423062004033,
+  "fit_seconds": 13.688006397998834,
+  "predict_seconds": 0.9484946450029383,
+  "total_seconds": 35.731095195005764,
+  "timing_scope": "Spark startup through collected predictions; excludes I/O and saving",
+  "model_parameters": {
+    "seed": 42,
+    "maxDepth": 3,
+    "maxBins": 32,
+    "minInstancesPerNode": 1,
+    "minInfoGain": 0.0,
+    "maxMemoryInMB": 256,
+    "cacheNodeIds": false,
+    "subsamplingRate": 1.0,
+    "checkpointInterval": 10,
+    "lossType": "squared",
+    "maxIter": 20,
+    "stepSize": 0.1,
+    "impurity": "variance",
+    "featureSubsetStrategy": "all",
+    "validationTol": 0.01,
+    "leafCol": "",
+    "minWeightFractionPerNode": 0.0,
+    "predictionCol": "prediction",
+    "featuresCol": "features",
+    "labelCol": "label"
+  }
+}

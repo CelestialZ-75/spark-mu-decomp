@@ -1,0 +1,51 @@
+{
+  "runtime": {
+    "host": "driver",
+    "python": "3.11.18",
+    "cgroup": {
+      "cpu.max": "75000 100000",
+      "memory.max": "1879048192",
+      "memory.swap.max": "0"
+    }
+  },
+  "model": "ridge",
+  "feature_kind": "mu",
+  "label_unit": "g",
+  "offline": true,
+  "rmse": 289.59396702422725,
+  "mae": 245.5348360775457,
+  "train_mean_baseline_rmse": 383.8528750019119,
+  "train_windows": 611,
+  "test_windows": 612,
+  "feature_count": 1,
+  "input_worker_hosts": [
+    "worker-1",
+    "worker-2"
+  ],
+  "master": "spark://master:7077",
+  "partitions": 2,
+  "seed": 42,
+  "spark_version": "3.5.7",
+  "startup_seconds": 6.527576948996284,
+  "distribution_seconds": 14.714694548994885,
+  "fit_seconds": 2.118651148994104,
+  "predict_seconds": 1.1224113569987821,
+  "total_seconds": 24.50166756699764,
+  "timing_scope": "Spark startup through collected predictions; excludes I/O and saving",
+  "model_parameters": {
+    "maxBlockSizeInMB": 0.0,
+    "aggregationDepth": 2,
+    "solver": "normal",
+    "standardization": true,
+    "fitIntercept": true,
+    "elasticNetParam": 0.0,
+    "predictionCol": "prediction",
+    "featuresCol": "features",
+    "labelCol": "label",
+    "maxIter": 20,
+    "regParam": 0.1,
+    "tol": 1e-06,
+    "loss": "squaredError",
+    "epsilon": 1.35
+  }
+}

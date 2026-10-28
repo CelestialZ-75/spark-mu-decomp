@@ -1,0 +1,2 @@
+/spark-mu-course-master-1 cpu=250000000 memory=402653184 swap=402653184
+/spark-mu-course-worker-1-1 cpu=1000000000 memory=2684354560 swap=2684354560

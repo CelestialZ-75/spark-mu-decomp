@@ -1,6 +1,6 @@
 # 项目知识与实际进度
 
-核对日期：2026-10-25。本次补齐独立运行所需的 CKC 与两份授权 EMG/力数据。旧环境/性能记录仍标记为历史验证，新运行记录见会话记录。
+核对日期：2026-10-28。2026-10-25 已补齐独立运行所需的 CKC 与两份授权 EMG/力数据。旧环境/性能记录仍标记为历史验证，2026-10-26 以来的实现、验收和文档整理合并见会话记录。
 
 ## 项目定位与阅读入口
 
@@ -9,7 +9,7 @@
 - 范围与步骤：[课程计划](../../SPARK_MU_COURSE_PROJECT_PLAN.md)。
 - 当前结构：[架构](ARCHITECTURE.md)。
 - 风格、接口、团队工作包：[开发说明](../DEVELOPMENT.md)。
-- 运行方法：[README](../../README.md)、[环境说明](../../environment/README.md)。
+- 运行方法：[README](../../README.md)、[环境说明](../../environment/README.md)、[统一实操指南](../START_HERE.md)。
 - 设计沿革：[决策](DECISIONS.md)。原型时期的后端协议已删除，不再照此实现。
 
 代码优先简约、易读、快速可运行。参数集中，少量普通函数和必要小类，复用原算法及 Spark 调度。ML 全部 CPU，GPU 仅为已有 MU 优化参考。
@@ -19,17 +19,17 @@
 | 内容 | 状态 | 证据与边界 |
 |---|---|---|
 | 内置算法与同步示例数据 | 已补齐 | src/mu_course/ckc 和 data；两试次各约 14 MB，60 个共同有效通道 |
-| 默认 CPU、数据读取和绘图 | 本次已验证 | 不传 core-dir/data 得到 3 个 MU；数据与包导入测试通过 |
+| 默认 CPU、数据读取和绘图 | 本轮 VMware 已验证 | 历史内置例子记录 3 个；本轮默认 CPU 得到 4 个，数据图与原始结果已检查 |
 | 独立安装包内容 | 本次已验证 | 干净 wheel 含五个 CKC 模块和两份 NPZ；临时目录中从 wheel 解包导入并完成 CPU 分解 |
 | WSL、依赖、CPU/Spark 环境算例 | 已验证（历史） | Python 3.11.15、Java 17，local[2] 两个 Python worker 进程，不是两个主机 |
 | MU 入口、输入选择、保存、绘图 | 已实现、已验证（历史） | run_experiment.py、plot_results.py 与本地真实片段 |
-| 三个 Spark 算子及原循环接入 | 本次 local 已验证 | 内置版本完成真实分解，CPU/Spark 各 3 个 MU，对应脉冲在 ±1 样本内一致 |
+| 三个 Spark 算子及原循环接入 | 本轮 VMware local 已验证 | CPU 与 Spark 1/2/4 分区均为 4 个 MU，配对脉冲最大偏差 1 样本 |
 | 实际 CUDA MU | 已验证（历史） | 原 Torch 循环，实际设备与同步计时，无自写 CUDA kernel |
-| 预热、重复计时、CSV | 已实现，CPU/GPU 已验证（历史） | benchmark.py；完整三后端重复对照未完成 |
-| Docker CPU 镜像与双 worker 配置 | 已编写、运行待验证 | driver 默认运行环境算例；尚无真实 MU 容器验收 |
-| 容器硬限额、同环境 CPU 基线 | 未实现 | Compose 未设置 cpus/mem_limit，Spark 资源声明不是硬限额 |
-| 预测特征、跨试次模板、MLlib 模型 | 未实现 | 无预测脚本；当前 NPZ 缺完整模板应用参数 |
-| 受限资源对照、预测图与报告 | 待完成 | 不能用旧 WSL 耗时替代受限集群结果 |
+| 预热、重复计时、CSV | 本轮 local 与受限容器已验证 | 本地 16 次／12 条正式；受限正式批次 48 次／36 条，不混合统计 |
+| Docker CPU 镜像与双 worker 配置 | 已有真实运行与文件证据 | 环境算例、真实 MU 和预测输入任务记录通过核对 |
+| 容器硬限额、同总额度 CPU 基线 | 已完成受限正式对照 | 2 CPU／4736 MiB；服务划分不同，inspect 与 cgroup 可追溯 |
+| 预测特征、跨试次模板、MLlib 模型 | 已实现并有真实结果 | 固定训练模板；RMS／MU 对齐；Ridge／GBT 模型、预测、指标与图齐全 |
+| 受限资源对照、预测图与报告 | 对照完成，报告与精选结果已整理 | 正式 12 组、36 条记录；报告、七张配图及精选证据位于 docs/report，待复核与提交 |
 
 ## 历史验证结果
 
@@ -50,14 +50,43 @@
 - MAT 用 Stage 3 emg_clean，不用 emg_env 代替；旧 0528 文件缺字段，历史验证改用 0831 数据。
 - driver 仍保留完整输入与全局运算，不能声称已支持超单机内存。
 - 总计算计时不含文件 I/O、保存和清理；同输出目录重跑覆盖结果。
-- 预测拟采用 LDX 0° 一训一测。session0_1/session0_2 是建议配对，未确认；窗口与标签单位实施时核对原配置。
-- 当前仓库为 private。用户授权的两个精简真实试次纳入 src/mu_course/data，其他真实数据、环境、输出和凭据仍排除。未来公开须另审文件与历史。
+- 当前预测使用 session0_1 训练、session0_2 测试，中指屈曲力 g；窗口 410、步长 102 样本，两端排除 430 样本。固定训练模板与 400 ms 居中 Hanning 平滑，限定离线预测。
+- 当前仓库为 private。用户授权的两个精简真实试次纳入 src/mu_course/data，本次选定的报告、配图与精选结果纳入 docs/report；其他真实数据、环境、完整输出和凭据仍排除。未来公开须另审文件与历史。
 
 ## 下一步
 
-先完成 Docker 硬限额、CPU 基线与真实 MU 验收；并行工作可按开发说明划分给团队。再准备训练模板和预测特征、接入 CPU MLlib、完成少量资源对照。Transformer 与区间预测是可选扩展。
+实验与正式对照已完成并回传，容器已关闭。[报告初稿](../report/COURSE_REPORT.md)、七张配图和 [精选结果](../report/results/RESULTS_GUIDE.md) 已整理到 `docs/report/`，准备随私有仓库提交；完整 outputs 和最初报告副本保留。对照 [统一指南第 10 节](../START_HERE.md#course-report) 复核、补充作者信息，再由用户暂存、提交和推送。复制交付材料时保留整个 docs/report。成功实验无需重跑；当前未执行本次 git add、commit／push。Transformer 与区间预测仍为可选扩展。
+
 
 ## 会话记录
+
+### 2026-10-26～2026-10-28 — 受限实验、预测与正式对照完成
+
+补齐 compose.limits.yaml、run_vm_stage.sh、prepare_prediction.py、predict_force.py、predict_submit.py 和 runtime_info.py。CPU 基线与默认集群总上限均为 2 CPU／4736 MiB，服务分配和线程布局分别记录。固定第一试次训练、第二试次测试；保存完整训练 MU 模板、阈值、方向与时间参数，apply_templates 新增可选固定极性参数，旧调用保持原行为。RMS／MU 共享窗口和标签；静默 MU 保留列，平滑限定离线使用。
+
+正式实验与检查代码保存为 run_formal_group.sh、check_mu_results.py、check_prediction_results.py、check_formal_mu.py、summarize_formal.py，提供单次验收、预热、重复运行、配对检查、指标重算和汇总绘图。Ubuntu 用户截图确认 Ruff 通过、pytest 为 17 passed、1 skipped、1 warning；本机早期 Windows MLlib worker 崩溃不作为 Ubuntu 验收结果。最初文档和合成输出检查不代表真实实验，后续以传回原始文件核对补齐证据。
+
+<a id="current-validation"></a>
+
+本轮正式批次为 `outputs/vm-results/formal-20261027-204319`。用户在 Ubuntu 运行并传回 Windows，助手读取原始文件核对，没有重新运行正式实验：12 组都有 SUCCESS，共 48 次运行；排除每组一次预热后为 36 条正式记录，耗时均值与样本标准差和原始 JSON 一致。12 项输入快照、配置和正式脚本哈希全部匹配，两份数据 SHA256 与特征元数据一致。
+
+24 次 MU 运行（含预热）均为 4 个 MU，与 CPU run-1 配对后脉冲最大偏差 1 样本，最大 PNR 差约 0.003266 dB、最大 SIL 差约 0.000200。预测 CSV 重算 RMSE／MAE 与记录一致，模型目录和曲线存在，cluster2 输入记录包含两个 worker。RMS 为 60 维，MU 预测为 1 维，训练／测试为 611／612 窗口；预测模板列数与短片段分解得到的 4 个 MU 不混写。
+
+RMS＋Ridge、MU＋GBT、MU＋Ridge 的测试 RMSE／MAE 分别约为 97.606／73.683、253.316／207.204、289.594／245.535 g；训练均值基线 RMSE 约 383.853 g。三次正式总计算均值 ± 样本标准差：MU CPU 0.6268 ± 0.0367 秒，双 worker 两分区 76.6370 ± 1.4979 秒；RMS＋Ridge local 6.9781 ± 0.4297 秒，集群 25.6673 ± 0.1174 秒。完整统计保留在 formal_summary.csv；本轮集群未优于 CPU／local，应据实分析小输入、调度、通信及资源划分。
+
+脉冲匹配只证明实现一致性；input_worker_hosts 只证明输入任务参与，未逐个重新载入全部真实模型，也未测得峰值内存余量。两个容器共享一台电脑，不代表真实多服务器或超单机内存能力；三次重复不是三份独立测试数据。
+
+将 START、VMware 环境和 SSH 第 6–8 步三份指南合并为 START_HERE.md，并同步 README、计划、环境、架构、开发与代码来源说明。依据正式批次生成 Markdown 报告初稿、七张配图和三次原始耗时附表，数值与图片引用已核对。按用户选定范围，将报告、配图、两份正式 CSV、MU 正确性记录、固定 run-1 原始示例、资源／特征元数据及哈希证据整理到 docs/report，并附 RESULTS_GUIDE.md。完整 outputs 与最初报告副本保留，未执行本次暂存、提交或推送。
+
+### 2026-10-25 — VMware 本地结果验收
+
+用户复用 ubuntu-bigdata：Ubuntu 24.04.5，2 vCPU、6 GB、50 GB 虚拟磁盘、NAT。用户在 SSH 内完成安装，报告 Java 17、Python 3.11.15、Torch 2.8.0+cpu、PySpark 3.5.7；现有测试截图为 11 passed、1 skipped（CUDA），Ruff 通过。
+
+助手读取 Windows 的 outputs/vm-results，核对两份单次结果和 16 份 benchmark 原始结果，以及 12 条正式 CSV。各次输入路径、[60,4096] 形状和算法参数相同。18 份结果全部为 4 个 MU，每 MU 脉冲数为 7、25、25、44；先按 ±1 样本脉冲重合评分作一对一匹配，再核对全部放电时刻，最大时差 1 样本（约 0.488 ms）。最低 SIL 为 0.935172，全部超过 0.8，最低 PNR 约 20.0785 dB；相对 CPU 最大 SIL 差约 0.000197、PNR 差约 0.00340 dB。所有保存数组均为有限值，索引和形状合法。四张 PNG 完整可读且非空白，未作人工图像内容判断。
+
+正式三次平均 total_seconds：CPU 0.982 秒，Spark 1/2/4 分区为 32.266/33.934/57.971 秒，样本标准差分别为 0.046/0.451/0.419/5.525 秒。CSV 的每行与对应 parameters.json 一致，run-0 预热未进入正式统计。这些是当前小输入、单虚拟机 local 结果，不是受限 Docker 或多服务器性能结论。
+
+本地验收记录保存为 outputs/vm-results/validation/CHECK_REPORT.md 和 audit.json（均在忽略的输出目录，不保证其他机器有这些文件）。此次只检查传回文件，没有重跑算法、启动 VM／Docker。虚拟机输入文件未单独导出哈希，仅核对所报输入路径、形状和参数。历史 3 个 MU 的差异原因仍未复现；本轮实现一致性通过不等于生理真实 MU 总数已知。可进入 Docker 环境算例，Docker／硬限额／预测仍待完成。未提交或推送。
 
 ### 2026-10-25 — 独立运行补齐
 

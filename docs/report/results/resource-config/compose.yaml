@@ -1,0 +1,81 @@
+name: spark-mu-course
+
+x-runtime: &runtime
+  image: spark-mu-course:dev
+  build:
+    context: ..
+    dockerfile: environment/Dockerfile
+  init: true
+  networks: [mu-cluster]
+  volumes:
+    - ../data:/workspace/data:ro
+    - ../outputs:/workspace/outputs
+
+services:
+  master:
+    <<: *runtime
+    hostname: master
+    command: [spark-class, org.apache.spark.deploy.master.Master, --host, master, --port, "7077", --webui-port, "8080"]
+    ports: ["127.0.0.1:8080:8080"]
+    healthcheck:
+      test: [CMD, python, -c, "import socket; socket.create_connection(('master', 7077), 2).close()"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+
+  worker-1:
+    <<: *runtime
+    hostname: worker-1
+    depends_on:
+      master: {condition: service_healthy}
+    command: [spark-class, org.apache.spark.deploy.worker.Worker, --host, worker-1, --cores, "1", --memory, 1g, --work-dir, /tmp/spark-work, "spark://master:7077"]
+    ports: ["127.0.0.1:8081:8081"]
+
+  worker-2:
+    <<: *runtime
+    hostname: worker-2
+    depends_on:
+      master: {condition: service_healthy}
+    command: [spark-class, org.apache.spark.deploy.worker.Worker, --host, worker-2, --cores, "1", --memory, 1g, --work-dir, /tmp/spark-work, "spark://master:7077"]
+    ports: ["127.0.0.1:8082:8081"]
+
+  driver:
+    <<: *runtime
+    hostname: driver
+    profiles: [tools]
+    depends_on:
+      master: {condition: service_healthy}
+      worker-1: {condition: service_started}
+      worker-2: {condition: service_started}
+    command:
+      - spark-submit
+      - --master
+      - spark://master:7077
+      - --deploy-mode
+      - client
+      - --driver-memory
+      - 1g
+      - --executor-memory
+      - 512m
+      - --conf
+      - spark.driver.host=driver
+      - --conf
+      - spark.driver.bindAddress=0.0.0.0
+      - --conf
+      - spark.cores.max=2
+      - --conf
+      - spark.executor.cores=1
+      - --conf
+      - spark.scheduler.minRegisteredResourcesRatio=1.0
+      - --conf
+      - spark.scheduler.maxRegisteredResourcesWaitingTime=30s
+      - scripts/environment_smoke.py
+      - --backend
+      - spark
+      - --master
+      - spark://master:7077
+      - --require-two-hosts
+
+networks:
+  mu-cluster:
+    internal: true

@@ -1,0 +1,42 @@
+{
+  "runtime": {
+    "host": "47e304e1fa0a",
+    "python": "3.11.18",
+    "cgroup": {
+      "cpu.max": "200000 100000",
+      "memory.max": "4966055936",
+      "memory.swap.max": "0"
+    }
+  },
+  "backend": "cpu",
+  "device": "cpu",
+  "device_name": "CPU",
+  "torch_version": "2.8.0+cpu",
+  "cuda_version": null,
+  "peak_gpu_memory_mib": null,
+  "shape": [
+    60,
+    4096
+  ],
+  "mu_count": 4,
+  "fit_seconds": 0.633658489001391,
+  "startup_seconds": 0.0,
+  "distribution_seconds": 0.0,
+  "total_seconds": 0.6398364320048131,
+  "worker_hosts": [],
+  "fsamp": 2048,
+  "start": 3.0,
+  "duration": 2.0,
+  "adapter": 0,
+  "ext_factor": 10,
+  "n_mu_max": 5,
+  "n_iter": 30,
+  "cost_fcn": 1,
+  "sil_threshold": 0.8,
+  "partitions": 2,
+  "threads": 2,
+  "seed": 42,
+  "dtype": "float32",
+  "data": "/opt/mu-course/.venv/lib/python3.11/site-packages/mu_course/data/ldx_0deg_1.npz",
+  "core_dir": "/opt/mu-course/.venv/lib/python3.11/site-packages/mu_course/ckc"
+}

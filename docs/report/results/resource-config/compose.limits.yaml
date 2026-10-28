@@ -1,0 +1,36 @@
+# Use together with compose.yaml. Aggregate cluster: 2 CPU, 4736 MiB RAM.
+# Initial small-input configuration for the 2-vCPU / 6-GiB VM; validate at runtime.
+services:
+  master:
+    cpus: 0.25
+    mem_limit: 384m
+    memswap_limit: 384m
+    environment:
+      SPARK_DAEMON_MEMORY: 128m
+  worker-1:
+    cpus: 0.5
+    mem_limit: 1280m
+    memswap_limit: 1280m
+    environment:
+      SPARK_DAEMON_MEMORY: 128m
+  worker-2:
+    cpus: 0.5
+    mem_limit: 1280m
+    memswap_limit: 1280m
+    environment:
+      SPARK_DAEMON_MEMORY: 128m
+  driver:
+    cpus: 0.75
+    mem_limit: 1792m
+    memswap_limit: 1792m
+  cpu:
+    image: spark-mu-course:dev
+    init: true
+    profiles: [tools]
+    cpus: 2.0
+    mem_limit: 4736m
+    memswap_limit: 4736m
+    networks: [mu-cluster]
+    volumes:
+      - ../outputs:/workspace/outputs
+    command: [python, -m, mu_course, --backend, cpu, --threads, "2", --output, /workspace/outputs/docker-cpu]

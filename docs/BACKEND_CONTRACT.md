@@ -39,7 +39,7 @@ Spark driver 持有完整输入，小数据版本不处理超单机内存问题�
 - 调用方在 finally 中 close()，并关闭自己创建的 session。
 
 算子不改变候选选择、阈值或 MU 质量规则。CPU/GPU 不通过 NumPy 绕行。
-后续模型使用 MLlib 现成实现，不扩展这里为通用机器学习后端。
+预测模型使用 MLlib 现成实现，不扩展这里为通用机器学习后端。跨试次模板应用的固定极性参数属于预测辅助接口，不改变这里的三个 Spark 算子约定；修改范围见 [SOURCE](../src/mu_course/ckc/SOURCE.md)。
 
 ## 检查
 

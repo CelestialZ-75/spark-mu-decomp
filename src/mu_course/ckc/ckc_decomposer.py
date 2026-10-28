@@ -1337,7 +1337,8 @@ class SegmentDecomposer:
 
 
 def apply_templates(
-    projection_matrix, centroids, emg_new, fsamp=2048, ext_factor=10, device="cuda", verbose=True
+    projection_matrix, centroids, emg_new, fsamp=2048, ext_factor=10, device="cuda",
+    verbose=True, polarities=None,
 ):
     """Apply pre-learned templates to new EMG, extracting spike trains.
 
@@ -1357,6 +1358,15 @@ def apply_templates(
     n_mus = projection_matrix.shape[0]
     if n_mus == 0:
         return {"mu_pulses": [], "sils": [], "pnrs": [], "n_mus": 0}
+
+    if polarities is not None:
+        polarities = np.asarray(polarities)
+        if polarities.shape != (n_mus,) or not np.isin(polarities, [-1, 1]).all():
+            raise ValueError("Expected one fixed training polarity per MU")
+        if centroids is None or np.asarray(centroids).shape != (n_mus, 2):
+            raise ValueError("Fixed templates require two training centroids per MU")
+        if not np.isfinite(centroids).all() or not np.all(np.mean(centroids, axis=1) > 0):
+            raise ValueError("Fixed template thresholds must be positive and finite")
 
     from .ckc_extender import CKCExtender
 
@@ -1380,7 +1390,9 @@ def apply_templates(
         t_new[-edge:] = 0
 
         tT = t_new.abs() * t_new
-        if -t_new.min() > t_new.max():
+        if polarities is not None:
+            tT[t_new * int(polarities[mu]) < 0] = 0
+        elif -t_new.min() > t_new.max():
             tT[t_new > 0] = 0
         else:
             tT[t_new < 0] = 0

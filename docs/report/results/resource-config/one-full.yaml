@@ -1,0 +1,6 @@
+services:
+  worker-1:
+    cpus: 1.0
+    mem_limit: 2560m
+    memswap_limit: 2560m
+    command: [spark-class, org.apache.spark.deploy.worker.Worker, --host, worker-1, --cores, "2", --memory, 2g, --work-dir, /tmp/spark-work, "spark://master:7077"]
