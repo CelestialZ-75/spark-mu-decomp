@@ -59,6 +59,10 @@ Python、uv、Java 17、PySpark 3.5.7、Torch 2.8.0 是现有技术栈。CPU/CUD
 
 ## 预测数据流
 
+三试次 cascade 对照的独立入口为 `src/mu_course/cascade_experiment.py`，科研版分解和细化函数在 `src/mu_course/ckc/cascade_decomposer.py`。CPU 逐任务顺序执行；Spark `local[3]` 调度试次级任务，并用单独进程合并。前一级合并与下一级 Track A 可重叠，但 Track B 必须等待前一级池。当前为同一机器上的进程模拟，不是四台机器或四个 Spark worker。详情见 [cascade 对照说明](../CASCADE_COMPARISON.md)。
+
+`src/mu_course/prepare_cascade_prediction.py` 将 cascade 池按试次投影为脉冲，再生成每条 MU 的六项特征，输出沿用原 `predict_force.py` 的特征表接口；它不修改回归模型。模板池若使用测试肌电，输出只可作为探索性评估。
+
 ```text
 LDX 0° 训练试次 → RMS / 训练 MU 模板及放电率 → 训练特征表
 LDX 0° 测试试次 → RMS / 应用训练模板及放电率 → 测试特征表

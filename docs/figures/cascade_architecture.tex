@@ -1,0 +1,73 @@
+% Compile with XeLaTeX: xelatex -output-directory=... cascade_architecture.tex
+\documentclass[tikz,border=8pt]{standalone}
+\usepackage[UTF8]{ctex}
+\usetikzlibrary{arrows.meta,positioning,fit,backgrounds,calc,decorations.pathreplacing}
+\definecolor{ink}{HTML}{263746}
+\definecolor{muted}{HTML}{647481}
+\definecolor{blue}{HTML}{2C6587}
+\definecolor{bluebg}{HTML}{EDF5F8}
+\definecolor{teal}{HTML}{267C70}
+\definecolor{tealbg}{HTML}{EDF7F3}
+\definecolor{orange}{HTML}{A86726}
+\definecolor{orangebg}{HTML}{FEF4E7}
+\definecolor{linegrey}{HTML}{CCD9DE}
+\tikzset{
+  box/.style={draw=#1!75, fill=#1!7, rounded corners=2pt, line width=.7pt,
+    minimum width=2.65cm, minimum height=1.82cm, align=center, text=ink},
+  merge/.style={draw=orange!80, fill=orangebg, rounded corners=2pt, line width=.7pt,
+    minimum width=2.85cm, minimum height=1.20cm, align=center, text=ink},
+  data/.style={draw=blue!60, fill=bluebg, rounded corners=2pt, line width=.7pt,
+    minimum width=2.35cm, minimum height=1.25cm, align=center, text=ink},
+  flow/.style={-{Stealth[length=2mm]}, line width=.75pt, draw=ink!75},
+  dependency/.style={-{Stealth[length=1.8mm]}, line width=.7pt, densely dashed, draw=muted},
+  smalllabel/.style={font=\scriptsize, text=muted, align=center},
+}
+\begin{document}
+\begin{tikzpicture}[x=1cm,y=1cm, font=\sffamily]
+  % Top row: Spark jobs. Each three-row icon means one task per trial.
+  \node[data] (input) at (0,0) {\bfseries 三份同步 EMG\\[-1pt]\scriptsize 共同有效通道};
+  \node[box=blue] (a10) at (3.5,0) {\bfseries Track A · 10\%\\[-2pt]\scriptsize CKC 盲分解 · [3, 9) s\\[1pt]\scriptsize T1 $\parallel$ T2 $\parallel$ T3};
+  \node[box=blue] (a20) at (7.3,0) {\bfseries Track A · 20\%\\[-2pt]\scriptsize CKC 盲分解 · [13, 19) s\\[1pt]\scriptsize T1 $\parallel$ T2 $\parallel$ T3};
+  \node[box=teal] (b20) at (11.1,0) {\bfseries Track B · 20\%\\[-2pt]\scriptsize 模板细化 · 保留 A 结果\\[1pt]\scriptsize T1 $\parallel$ T2 $\parallel$ T3};
+  \node[box=blue] (a30) at (14.9,0) {\bfseries Track A · 30\%\\[-2pt]\scriptsize CKC 盲分解 · [23, 29) s\\[1pt]\scriptsize T1 $\parallel$ T2 $\parallel$ T3};
+  \node[box=teal] (b30) at (18.7,0) {\bfseries Track B · 30\%\\[-2pt]\scriptsize 模板细化 · 保留 A 结果\\[1pt]\scriptsize T1 $\parallel$ T2 $\parallel$ T3};
+  \node[data] (output) at (24.3,-3.0) {\bfseries Pool 30\%\\[-1pt]\scriptsize 最终 MU 模板池};
+
+  % Merges are executed by the separate local merge process.
+  \node[merge] (m10) at (5.4,-3.0) {\bfseries 汇总与筛选 · 10\%\\[-1pt]\scriptsize 生成 Pool 10\%};
+  \node[merge] (m20) at (13.0,-3.0) {\bfseries 汇总与筛选 · 20\%\\[-1pt]\scriptsize 生成 Pool 20\%};
+  \node[merge] (m30) at (20.6,-3.0) {\bfseries 汇总与筛选 · 30\%\\[-1pt]\scriptsize 生成最终模板池};
+
+  % Upper arrows express scheduling and forwarding of gathered A results.
+  \draw[flow] (input) -- (a10);
+  \draw[dependency] (a10) -- (a20);
+  \draw[flow] (a20) -- (b20);
+  \draw[dependency] (b20) -- (a30);
+  \draw[flow] (a30) -- (b30);
+  \draw[flow] (a10.south) |- (m10.west);
+  \draw[flow] ($(b20.south)+(0.6,0)$) |- ($(m20.north)+(0,0.45)$) -- (m20.north);
+  \draw[flow] ($(b30.south)+(0.6,0)$) |- ($(m30.north)+(0,0.45)$) -- (m30.north);
+  \draw[flow] (m30.east) -- (output.west);
+  \draw[flow,draw=orange!85] (m10.east) -| (b20.south)
+    node[pos=.24,below,smalllabel,text=orange] {Pool 10\%};
+  \draw[flow,draw=orange!85] (m20.east) -| (b30.south)
+    node[pos=.24,below,smalllabel,text=orange] {Pool 20\%};
+
+  % Execution resources and the experiment scope.
+  \node[anchor=west, font=\small\bfseries, text=blue] at (-1.2,1.65)
+    {Spark local[3]：3 个任务槽，按试次并行};
+  \node[anchor=west, font=\small\bfseries, text=orange] at (-1.2,-4.25)
+    {独立合并进程：质量筛选、谱系 / 余弦 / 脉冲去重、静息段筛选};
+  \draw[decorate, decoration={brace,amplitude=4pt},draw=teal!65]
+    (4.0,-1.42) -- (8.7,-1.42)
+    node[midway,below=5pt,smalllabel,text=teal] {汇总 10\% 与 A20 可重叠};
+  \draw[decorate, decoration={brace,amplitude=4pt},draw=teal!65]
+    (11.6,-1.42) -- (16.3,-1.42)
+    node[midway,below=5pt,smalllabel,text=teal] {汇总 20\% 与 A30 可重叠};
+
+  \node[anchor=west,align=left,font=\scriptsize,text=muted] at (-1.2,-5.05)
+    {T1 / T2 / T3：三个试次任务；虚线：前一任务组完成后调度。Track A 最多 40 次候选、每次最多 45 次迭代；Track B 细化 5 次。\\
+     Track B 同时等待本级 Track A 和上一级池；图中上排箭头表示调度顺序及 A 结果暂存，不表示 A 直接输入 B。\\
+     实际运行于同一 WSL 主机；3 个 Spark 任务槽和一个独立进程并非四个 Spark worker 或四台服务器。};
+\end{tikzpicture}
+\end{document}

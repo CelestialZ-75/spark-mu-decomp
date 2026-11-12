@@ -49,7 +49,7 @@ submit=(spark-submit --master spark://master:7077 --deploy-mode client
 for run in 0 1 2 3; do
   dest="/workspace/outputs/$tag/$group/run-$run"
   if [[ "$kind" == mu ]]; then
-    args=(--start 3 --duration 2 --ext-factor 10 --n-mu-max 5 --n-iter 30 --cost-fcn 1 --sil-threshold 0.8 --seed 42 --output "$dest")
+    args=(--start "${MU_START:-3}" --duration "${MU_DURATION:-2}" --ext-factor 10 --n-mu-max "${MU_N_MU_MAX:-5}" --n-iter 30 --cost-fcn 1 --sil-threshold 0.8 --seed 42 --output "$dest")
     if [[ "$profile" == cpu ]]; then
       cmd=("${dc[@]}" run --rm --no-deps cpu python -m mu_course --backend cpu --threads 2 "${args[@]}")
     else

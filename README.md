@@ -79,6 +79,8 @@ NPY/NPZ 应已预处理，emg 形状为 [channels, samples]，NPZ 键为 emg。M
 - [从零到交付：VMware Ubuntu 实操指南](docs/START_HERE.md)
 - [课程报告](docs/report/COURSE_REPORT.md) 与 [精选结果说明](docs/report/results/RESULTS_GUIDE.md)
 - [课程计划](SPARK_MU_COURSE_PROJECT_PLAN.md) 与 [开发顺序](SETUP_PLAN.md)
+- [完整试次 CKC 对照](docs/FULL_TRIAL_EXPERIMENT.md)
+- [三试次粗粒度 Cascade 对照与 VMware 待办](docs/CASCADE_COMPARISON.md)
 - [架构](docs/knowledge-base/ARCHITECTURE.md) 与 [实际进度](docs/knowledge-base/KNOWLEDGE.md)
 - [开发风格、接口与团队工作包](docs/DEVELOPMENT.md)
 - [Spark 算子](docs/BACKEND_CONTRACT.md)

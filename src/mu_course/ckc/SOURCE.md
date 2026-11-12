@@ -2,6 +2,8 @@
 
 来源：`FingerForce_Decode/example/gpu_MU_extract`，2026-10-25 引入分解、扩展、预处理、MU 放电率编码和质量检查五个模块。原算法说明与参考名称保留，不复制整个研究仓库；修改仅位于当前课程仓库，原研究文件未改动。
 
+`cascade_decomposer.py` 另取自本机科研项目 `src/models/v3_1/ckc/decomposer.py` 的当前版本，仅调整包内扩展器导入，供 cascade 使用 `SegmentDecomposer` 和 `refine_filters`。它与较早课程版并存，不替换已有实验入口。
+
 课程适配范围：
 
 - 调整为包内导入，去掉外部电极布局导入并使用文件自带布局，清理未使用变量／导入及排版。

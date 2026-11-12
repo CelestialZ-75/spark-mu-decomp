@@ -1,0 +1,58 @@
+version: "1.0"
+figure:
+  title: "Cascade CKC decomposition and parallel execution"
+  direction: "LR"
+  target: "presentation"
+metadata:
+  source_framework: "PyTorch / PySpark"
+  source_files:
+    - "src/mu_course/cascade_experiment.py"
+    - "docs/CASCADE_COMPARISON.md"
+  mode: "presentation"
+  unresolved: []
+  execution_scope: "Single host; Spark local[3] and one separate merge process."
+  semantic_review: "A20 waits for A10; B20 waits for both A20 and pool10. A30 waits for B20; B30 waits for both A30 and pool20. Merge overlaps with the next Track A."
+panels:
+  - id: overall
+    label: ""
+    title: ""
+    node_ids: []
+nodes:
+  - {id: trials, label: "Three aligned trials", role: input, kind: data, panel: overall}
+  - {id: a10, label: "Track A 10%", role: operator, kind: module, repeat: 3, panel: overall}
+  - {id: merge10, label: "Merge 10%", role: fusion, kind: merge, panel: overall}
+  - {id: pool10, label: "Pool 10%", role: representation, kind: data, panel: overall}
+  - {id: a20, label: "Track A 20%", role: operator, kind: module, repeat: 3, panel: overall}
+  - {id: b20, label: "Track B 20%", role: operator, kind: module, repeat: 3, panel: overall}
+  - {id: merge20, label: "Merge 20%", role: fusion, kind: merge, panel: overall}
+  - {id: pool20, label: "Pool 20%", role: representation, kind: data, panel: overall}
+  - {id: a30, label: "Track A 30%", role: operator, kind: module, repeat: 3, panel: overall}
+  - {id: b30, label: "Track B 30%", role: operator, kind: module, repeat: 3, panel: overall}
+  - {id: merge30, label: "Merge 30%", role: fusion, kind: merge, panel: overall}
+  - {id: pool30, label: "Pool 30%", role: output, kind: output, panel: overall}
+edges:
+  - {from: trials, to: a10, type: main}
+  - {from: trials, to: a20, type: main}
+  - {from: trials, to: b20, type: main}
+  - {from: trials, to: a30, type: main}
+  - {from: trials, to: b30, type: main}
+  - {from: a10, to: merge10, type: main}
+  - {from: merge10, to: pool10, type: main}
+  - {from: pool10, to: b20, type: main}
+  - {from: a20, to: merge20, type: main}
+  - {from: b20, to: merge20, type: main}
+  - {from: merge20, to: pool20, type: main}
+  - {from: pool20, to: b30, type: main}
+  - {from: a30, to: merge30, type: main}
+  - {from: b30, to: merge30, type: main}
+  - {from: merge30, to: pool30, type: main}
+  - {from: a10, to: a20, type: auxiliary, label: "scheduling barrier"}
+  - {from: a20, to: b20, type: auxiliary, label: "scheduling barrier"}
+  - {from: b20, to: a30, type: auxiliary, label: "scheduling barrier"}
+  - {from: a30, to: b30, type: auxiliary, label: "scheduling barrier"}
+annotations:
+  - "Track A: independent blind CKC per trial; maximum 40 candidates, 45 iterations."
+  - "Track B: refine the previous pool on each trial; 5 iterations."
+  - "Merge: within-trial cosine, lineage and cross-trial cosine, source-spike and rest filtering."
+  - "The diagram hides repeated trial input edges for readability; the three stages use each trial's own plateau."
+groups: []

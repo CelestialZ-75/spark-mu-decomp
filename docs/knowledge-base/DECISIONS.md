@@ -1,5 +1,9 @@
 # Decisions
 
+## 2026-11-12 — Trial-level cascade comparison
+
+Compare the same three-trial CKC cascade as sequential CPU and Spark trial-level tasks. A separate local process merges each level while the next level's Track A can proceed; Track B waits for the previous pool. The initial WSL local run simulates slots, not independent Spark worker nodes, and has no container limits. The third trial remains in ignored local outputs rather than the repository.
+
 ## 2026-10-25 — Bundle a standalone course example
 
 Status: User explicitly authorized the two named real trials for the private course repository.
