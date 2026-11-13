@@ -16,9 +16,11 @@ def test_bundled_trials_have_aligned_force_and_fixed_channels():
     with (
         np.load(directory / "ldx_0deg_1.npz") as first,
         np.load(directory / "ldx_0deg_2.npz") as second,
+        np.load(directory / "ldx_0deg_3.npz") as third,
     ):
         np.testing.assert_array_equal(first["channel_ids"], second["channel_ids"])
-        for trial in (first, second):
+        np.testing.assert_array_equal(first["channel_ids"], third["channel_ids"])
+        for trial in (first, second, third):
             assert trial["emg"].dtype == np.float32
             assert trial["force"].shape == (2, trial["emg"].shape[1])
             assert trial["fsamp"].item() == 2048

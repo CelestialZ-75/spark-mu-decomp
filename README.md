@@ -2,7 +2,7 @@
 
 在一台电脑上模拟资源受限的 Spark 集群，观察真实肌电任务的计算、调度和通信开销。任务包括 MU 分解效率对照，以及 CPU MLlib 指力预测。GPU 仅用于 MU 分解参考。
 
-仓库已内置 CKC 代码和两份同步 EMG/力数据，不需要 FingerForce_Decode 或额外算法目录。运行环境为 Linux x86_64，本轮使用 VMware Ubuntu，WSL2 也可用于本地运行；需要 Python 3.11，Spark 另需 Java 17。
+仓库已内置 CKC 代码和三份 LDX 0° 中指梯形试次的同步 EMG/力数据，不需要 FingerForce_Decode 或额外算法目录。运行环境为 Linux x86_64，本轮使用 VMware Ubuntu，WSL2 也可用于本地运行；需要 Python 3.11，Spark 另需 Java 17。
 
 当前已完成受限容器 MU、RMS＋Ridge／MU＋GBT／MU＋Ridge 预测和正式资源对照，共 12 组、36 条正式记录。课程报告已有 Markdown 初稿，待复核与交付；验证范围与关键结果见 [实际进度](docs/knowledge-base/KNOWLEDGE.md)。
 
@@ -86,4 +86,4 @@ NPY/NPZ 应已预处理，emg 形状为 [channels, samples]，NPZ 键为 emg。M
 - [Spark 算子](docs/BACKEND_CONTRACT.md)
 
 代码优先简约、易读、快速可运行，参数集中，接口写清形状、单位和时间基准。
-仓库当前为 private。用户授权的两份精简科研数据随仓库提供，本次选定的报告、配图与精选结果放在 `docs/report/`；其他真实数据、环境、缓存、凭据与完整生成输出仍不跟踪。未来公开前单独审查源码、数据与历史。.private/ 的旧路径和检查脚本仅供历史追溯，队友运行不需要它们。
+仓库当前为 private。用户授权的三份精简科研数据随仓库提供，本次选定的报告、配图与精选结果放在 `docs/report/`；其他真实数据、环境、缓存、凭据与完整生成输出仍不跟踪。未来公开前单独审查源码、数据与历史。.private/ 的旧路径和检查脚本仅供历史追溯，队友运行不需要它们。

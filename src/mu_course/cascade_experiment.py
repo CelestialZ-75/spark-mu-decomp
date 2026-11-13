@@ -15,6 +15,8 @@ from pathlib import Path
 
 import numpy as np
 
+from mu_course.dataset import DATA_DIR
+
 LEVELS = [(3, 9), (13, 19), (23, 29)]
 FS = 2048
 EXT = 10
@@ -208,7 +210,9 @@ def merge(results, paths):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--mode", choices=["cpu", "spark"], required=True)
-    parser.add_argument("--trials", nargs=3, required=True)
+    parser.add_argument(
+        "--trials", nargs=3, default=[str(DATA_DIR / f"ldx_0deg_{i}.npz") for i in (1, 2, 3)]
+    )
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--n-mu-max", type=int, default=40)
     parser.add_argument("--slots", type=int, default=3, help="Spark local task slots")

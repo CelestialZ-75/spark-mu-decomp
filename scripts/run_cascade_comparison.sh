@@ -5,7 +5,12 @@ batch=${1:?usage: run_cascade_comparison.sh BATCH_DIRECTORY}
 python=${PYTHON:-.venv-wsl/bin/python}
 export OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 MKL_NUM_THREADS=1
 export PYTHONUNBUFFERED=1
-trials=("$batch/inputs/trial1.npz" "$batch/inputs/trial2.npz" "$batch/inputs/trial3.npz")
+if [[ -d "$batch/inputs" ]]; then
+    trials=("$batch/inputs/trial1.npz" "$batch/inputs/trial2.npz" "$batch/inputs/trial3.npz")
+else
+    mkdir -p "$batch"
+    trials=(src/mu_course/data/ldx_0deg_1.npz src/mu_course/data/ldx_0deg_2.npz src/mu_course/data/ldx_0deg_3.npz)
+fi
 
 printf 'cpu\n' > "$batch/status.txt"
 if ! "$python" -m mu_course.cascade_experiment --mode cpu --trials "${trials[@]}" --output "$batch/cpu" > "$batch/cpu.log" 2>&1; then

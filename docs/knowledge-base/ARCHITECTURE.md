@@ -1,6 +1,6 @@
 # 项目架构
 
-更新：2026-10-28。已内置 MU 算法和两份 EMG/力数据，受限 Docker MU／预测及正式资源对照已完成。实现状态见 [知识库](KNOWLEDGE.md)。
+更新：2026-11-13。已内置 MU 算法和三份 LDX 0° 中指梯形 EMG/力试次；旧版细粒度算子的受限 Docker 对照已完成，粗粒度 Cascade 的 VMware 验收尚未完成。实现状态见 [知识库](KNOWLEDGE.md)。
 
 ## 现有数据流
 
@@ -26,7 +26,7 @@ benchmark：顺序预热和重复上述流程 → timings.csv → 耗时图
 |---|---|
 | src/mu_course/run_experiment.py | CLI 参数、内置/可选外部算法、输入、MU 调用、保存和计时 |
 | src/mu_course/ckc/ | 内置分解、扩展、预处理、放电率编码与质量检查 |
-| src/mu_course/data/、dataset.py | 两份完整同步 EMG/力试次及轻量读取 |
+| src/mu_course/data/、dataset.py | 三份完整同步 EMG/力试次及轻量读取 |
 | scripts/plot_example_data.py | 查看内置 EMG 与力曲线 |
 | scripts/prepare_example_data.py | 维护者重新导出数据，队友运行无需源仓库 |
 | src/mu_course/spark_ops.py | 时间块缓存与三个 Spark 算子 |

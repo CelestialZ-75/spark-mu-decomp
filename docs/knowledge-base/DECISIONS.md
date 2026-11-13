@@ -1,5 +1,9 @@
 # Decisions
 
+## 2026-11-13 — Bundle all three Cascade source trials
+
+Bundle the three LDX 0° Middle Trapezoid trials as compact EMG/force NPZ files so teammates can run the Cascade without the research repository. The three trials share the same 60 adapter-0 good channels. Other fingers, waveforms and research data are outside this decision. The earlier two-trial-only restriction is superseded for session0_3; the repository remains private.
+
 ## 2026-11-12 — Trial-level cascade comparison
 
 Compare the same three-trial CKC cascade as sequential CPU and Spark trial-level tasks. A separate local process merges each level while the next level's Track A can proceed; Track B waits for the previous pool. The initial WSL local run simulates slots, not independent Spark worker nodes, and has no container limits. The third trial remains in ignored local outputs rather than the repository.

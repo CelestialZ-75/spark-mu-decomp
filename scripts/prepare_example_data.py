@@ -1,8 +1,9 @@
-"""Re-export the two bundled trials; normal users do not need the source repository."""
+"""Re-export the three bundled trials; normal users do not need the source repository."""
 
 import argparse
 import hashlib
 import json
+from functools import reduce
 from pathlib import Path
 
 import numpy as np
@@ -28,10 +29,10 @@ def main(argv=None):
     args = parser.parse_args(argv)
     paths = [
         args.source_dir / session / "aligned_Middle_Trapezoid.mat"
-        for session in ("session0_1", "session0_2")
+        for session in ("session0_1", "session0_2", "session0_3")
     ]
     trials = [_load_mat(str(path)) for path in paths]
-    channels = np.intersect1d(*(good_channels(data) for data in trials))
+    channels = reduce(np.intersect1d, (good_channels(data) for data in trials))
     if not channels.size:
         raise ValueError("Trials have no common good channels in adapter 0")
     args.output.mkdir(parents=True, exist_ok=True)

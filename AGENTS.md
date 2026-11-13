@@ -9,7 +9,7 @@
   notes and validation scripts. Keep credentials, environments, caches, other real data,
   wheels and experiment outputs out of Git. Do not copy the research repository
   wholesale. Review tracked content separately before any future public release.
-- The user authorized two compact real EMG/force trials in `src/mu_course/data/`
+- The user authorized the three LDX 0° Middle Trapezoid compact EMG/force trials in `src/mu_course/data/`
   and the required CKC modules in `src/mu_course/ckc/` for standalone team use.
   These are the narrow exception to excluding research data/source; do not add
   other trials or copy the research repository wholesale.

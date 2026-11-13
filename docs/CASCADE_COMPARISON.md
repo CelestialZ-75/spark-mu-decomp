@@ -8,14 +8,11 @@
 
 **VMware 尚待实现和验收**：目前 cascade 入口使用 `local[N]`，不能连接已有的 Spark standalone master；现有 Compose 仅配置两个 worker。需补充三 worker 的调度、独立合并进程及资源限制，并在 VMware 上核对实际进程位置、资源限额、参数和结果。不得将现有 WSL 单机数字称为 VMware 资源限额实验。此前的 VMware 结果属于旧版细粒度算子，不是本 cascade 的运行证据。
 
-项目只随仓库提供两个已授权试次。本机三试次实验额外从科研项目加载第三试次，仅输出到被 Git 忽略的 `outputs/`，不将其加入仓库。三个输入仅保留共同有效通道，因而与科研项目完整电极通道配置不必然相同。三个试次仅用于分解和性能研究，不能将其中任一试次同时作为完全独立的预测测试集。
+仓库提供三个 LDX 0° 中指梯形试次，运行本实验不需要科研项目。三个输入仅保留共同有效通道，因而与科研项目完整电极通道配置不必然相同。三个试次若全部用于模板构建，就不能将其中任一试次同时作为完全独立的预测测试集。
 
 在 WSL 中、仓库根目录运行：
 
 ```bash
-.venv-wsl/bin/python scripts/prepare_cascade_trials.py \
-  --third-mat /path/to/session0_3/aligned_Middle_Trapezoid.mat \
-  --output outputs/my-cascade/inputs
 bash scripts/run_cascade_comparison.sh outputs/my-cascade
 ```
 
@@ -44,7 +41,7 @@ WSL 单机，三个试次共有 60 通道，CPU 和 Spark 参数一致。CPU 顺
   --master 'local[2]' --output outputs/my-cascade-prediction/ridge
 ```
 
-示例依赖本机先前产生的模板池；仓库本身不包含第三试次或此实验输出。投影复用科研版 `refine_filters(n_iter=0)`：每个试次分别计算协方差与放电检测阈值，因此是无监督试次适配，并非固定阈值的跨试次投影。
+示例依赖本机先前产生的模板池；实验输出不随仓库提供，可使用仓库内三个试次重新运行生成。投影复用科研版 `refine_filters(n_iter=0)`：每个试次分别计算协方差与放电检测阈值，因此是无监督试次适配，并非固定阈值的跨试次投影。
 
 本机单次探索：session0_1 的 611 个窗口训练、session0_2 的 612 个窗口测试。52 MU 产生 312 列，两试次所有 MU 都有脉冲，各列在两试次均有变化。CVISI 原始缺失值训练 13501 个、测试 16578 个。原样使用 MLlib GBT 与 Ridge，RMSE/MAE 分别为 91.84/65.34 g、93.23/68.09 g；训练均值基线 RMSE 383.85 g。已用预测 CSV 重算指标。输出位于 `outputs/cascade-prediction-20261112/`。
 

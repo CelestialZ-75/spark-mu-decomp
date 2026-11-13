@@ -105,6 +105,23 @@
       "force_field": "force_aligned",
       "duration_seconds": 31.06884765625,
       "bytes": 14647155
+    },
+    {
+      "file": "ldx_0deg_3.npz",
+      "source": "processed_0831LDX/session0_3/aligned_Middle_Trapezoid.mat",
+      "source_sha256": "cdd855749c8f1b2eade26d26b02f13ecec39936234a5426b27cb0a99d5583437",
+      "sha256": "3baee3b69b6f25f5f28d3a6bc33bd5f77ba9ec3a8debfb09042dd5adcb2074e3",
+      "emg_shape": [
+        60,
+        63600
+      ],
+      "force_shape": [
+        2,
+        63600
+      ],
+      "force_field": "force_aligned",
+      "duration_seconds": 31.0546875,
+      "bytes": 14652246
     }
   ]
 }
