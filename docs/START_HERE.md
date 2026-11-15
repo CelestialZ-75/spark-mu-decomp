@@ -10,6 +10,8 @@ Windows 负责编辑、传输和查看结果；Ubuntu 负责 Python、Spark 与 
 
 **本轮已完成环境、本地验证、容器 MU／预测和正式对照，结果已传回 Windows，容器已关闭。[报告 Markdown 初稿](report/COURSE_REPORT.md)、七张配图和 [精选结果](report/results/RESULTS_GUIDE.md) 已整理到 `docs/report/`，现在对照第 10 节复核和准备交付，不必重跑实验。**具体批次、数据及验证边界统一记录在 [知识库当前验收](knowledge-base/KNOWLEDGE.md#current-validation)。下面是复现步骤，不要求已完成者重新从头执行。
 
+已完成的结果属于原实验。已经在 Windows 拉取粗粒度 Cascade PPL、要在 VMware 重跑并更新 PPT 图表时，从[第 13 节](#cascade-vm-ppt)开始。
+
 | 阶段 | 内容 |
 |---|---|
 | [项目概览](#overview) | 两条主线、架构、数据和脚本职责 |
@@ -24,6 +26,7 @@ Windows 负责编辑、传输和查看结果；Ubuntu 负责 Python、Spark 与 
 | [10. 课程报告](#course-report) | 已有 Markdown 初稿，当前复核与准备交付 |
 | [11. 结果回传](#export-results) | 本地、单次容器和正式批次分别回传 |
 | [12. 结束与恢复](#vm-resume) | 关闭、重连、页面转发和重试 |
+| [13. Cascade PPL 补跑与 PPT 重绘](#cascade-vm-ppt) | VMware 三试次分解、六组预测、重绘与回传 |
 
 ### 窗口与路径约定
 
@@ -1233,4 +1236,174 @@ bash scripts/run_vm_stage.sh rms-ridge
 只在该目录确实存在且你准备重跑时执行。MU 分解仍沿用旧入口的覆盖行为，因此要保留上一轮时同样先改名。运行日志每阶段覆盖一次，正式重复实验应使用不同的输出目录并逐次保存。
 
 实现依据：[MLlib LinearRegression](https://spark.apache.org/docs/3.5.7/api/python/reference/api/pyspark.ml.regression.LinearRegression.html)、[GBTRegressor](https://spark.apache.org/docs/3.5.7/api/python/reference/api/pyspark.ml.regression.GBTRegressor.html)、[Compose 服务与资源配置](https://docs.docker.com/reference/compose-file/services/)。
+
+<a id="cascade-vm-ppt"></a>
+
+## 13. 在 VMware 补跑粗粒度 Cascade PPL 并更新 PPT 图表
+
+已经做完前面的实验时，从这里开始。Cascade 把整个试次的提取或细化交给 Spark 任务，另用一个进程合并模板池；旧实验则在 CKC 分解内部把算子切成 Spark 分区。两条路线在当前代码中对应不同的计时，图表按下面的口径更新。
+
+| `rev1.pptx` 中的位置 | 这次怎么更新 |
+|---|---|
+| 第 10 张，页脚 9：「资源与迭代开销分析」 | 若要展示新 PPL，换成 `cascade-vm-time.png`，把标题和文字同步改为 **VMware 单机 CPU 顺序 / Spark local Cascade**。若仍要展示 1/2 worker、1/2/4 分区和 fit 占比，保留原细粒度图，或按 13.5 重绘后明确标成旧版细粒度。 |
+| 第 11 张，页脚 10：「预测」对比表 | 用 `prediction-table.md` 更新 PPT 的可编辑表格。替换维数、误差及 local / 集群耗时，去掉写死的旧结论。 |
+| 第 12 张，页脚 11：真实与预测曲线 | 用 `prediction-curves.png` 替换三联图。各方法统一展示双 worker 的 `run-1`，表格仍统计三次正式运行。 |
+
+当前 Cascade 入口只支持 `local[N]`，默认是同一台 VMware 虚拟机里的 3 个 Spark 任务槽和一个独立合并进程。你的 2 vCPU 会被这些进程共享。这能测本机流水线的运行情况，但无法得到新 PPL 的双 worker 分区曲线或等资源加速比。要测 Cascade standalone，需要先实现外部 master 与共享输入，再配置和验收独立的 Spark worker 及合并资源；本节的 Docker 双 worker 仅用于预测，以及可选的旧版分解复跑。实现与数据边界见 [Cascade 对照说明](CASCADE_COMPARISON.md)。
+
+### 13.1 同步 Ubuntu 运行副本，检查三个内置试次
+
+VS Code 拉取更新只影响 Windows。按 [1.2「源码变动」](#vm-files) 先备份 VM 代码，再用 1.1 的 **Windows 打包和 SCP**、**Ubuntu 解压**同步 `src`、`scripts` 等文件。已有的 `outputs/` 和 `.venv-wsl/` 可以保留；只传这份 Markdown 不够。
+
+从提交 `78eb190` 起，仓库内置三份同为 60 个共同有效通道的试次。同步代码时把 `src/mu_course/data/` 一起传入 VMware，脚本可直接读取三份 NPZ。在 **Ubuntu SSH** 中检查：
+
+```bash
+cd ~/projects/spark-mu-decomp
+ls -lh src/mu_course/data/ldx_0deg_{1,2,3}.npz
+```
+
+### 13.2 Ubuntu 跑完整的 Cascade 分解：CPU 顺序、Spark local 流水
+
+在 **Ubuntu SSH** 执行。如果这台 VM 上的项目容器还在跑，用 [12.1](#vm-resume) 的 `down` 关闭，避免和本机分解抢资源。不要同时跑两组分解。如果已经装了 `tmux`，可以先运行 `tmux new -s cascade-vm`，再执行下面的命令；断线后重连并用 `tmux attach -t cascade-vm` 回到原会话。
+
+```bash
+cd ~/projects/spark-mu-decomp
+export JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
+export PATH="$JAVA_HOME/bin:$PATH"
+PY="$PWD/.venv-wsl/bin/python"
+export PYSPARK_PYTHON="$PY" PYSPARK_DRIVER_PYTHON="$PY"
+unset SPARK_HOME
+ls scripts/{prepare_cascade_trials.py,run_cascade_comparison.sh,cascade_vm_report.py} \
+   src/mu_course/{cascade_experiment.py,prepare_cascade_prediction.py} &&
+  bash scripts/bootstrap_wsl.sh cpu &&
+  java -version &&
+  "$PY" -m mu_course.cascade_experiment --help &&
+  "$PY" scripts/cascade_vm_report.py --help &&
+  nproc && free -h && df -h .
+```
+
+每轮新建一个目录。分解三个试次的共同通道，CPU 和 Spark 依次读同一份输入。完整实验采用 3–9、13–19、23–29 秒，候选 40、迭代上限 45、细化 5；不使用旧版 2 秒小算例的参数。
+
+```bash
+CASCADE_DIR="outputs/cascade-vm-$(date +%Y%m%d-%H%M%S)"
+mkdir -p outputs &&
+  mkdir "$CASCADE_DIR" &&
+  printf '%s\n' "$CASCADE_DIR" > outputs/last-cascade-vm.txt &&
+  { nproc; free -h; java -version; "$PY" --version; } > "$CASCADE_DIR/vm-environment.txt" 2>&1 &&
+  sha256sum src/mu_course/data/ldx_0deg_{1,2,3}.npz > "$CASCADE_DIR/input-sha256.txt" &&
+  PYTHON="$PY" bash scripts/run_cascade_comparison.sh "$CASCADE_DIR"
+```
+
+运行脚本把日志写到文件，终端暂时没有输出是正常的。另开一个 SSH 窗口并进入项目目录，可以看进度：
+
+```bash
+CASCADE_DIR=$(cat outputs/last-cascade-vm.txt)
+cat "$CASCADE_DIR/status.txt"
+tail -n 20 "$CASCADE_DIR"/*.log
+```
+
+看到 `complete` 后验收。检查三个等级的谱系、模板和 PNR 是否一致，并检查 Track B 是否等上一层合并完成；工具同时打印是否实际观察到合并与下一层 Track A 重叠。模板数以实测为准。任一检查失败，先保留日志和这一批目录排查，不用失败的池继续预测。
+
+```bash
+"$PY" scripts/cascade_vm_report.py check-pools "$CASCADE_DIR" &&
+  cat "$CASCADE_DIR"/{cpu,spark}/summary.json
+```
+
+分解图是两组各一次的实测，用的是含启动与收尾的总耗时。若要报告波动，另建目录重复完整的 CPU / Spark 对照，并明确重复次数和机器条件。不要把之前的 WSL 数字填成 VMware 结果。
+
+### 13.3 固定两套预测特征，建立新 Docker 预测批次
+
+按 [6.1](#step-6) 检查目录 ACL 并用更新后的源码重建镜像，确认有 `Output writable`。接着用 6.2 的 smoke 确认两个 worker 可用。下面六组都读同一批冻结的特征：RMS 用原有入口；Cascade MU 用上节 Spark 的最终池。两者仍从仓库带力标签的第 1 试次训练、第 2 试次测试，共用 200 ms 窗口、50 ms 步长与相同边界。
+
+```bash
+PY="$PWD/.venv-wsl/bin/python"
+CASCADE_DIR=$(cat outputs/last-cascade-vm.txt)
+FORMAL_DIR="outputs/formal-cascade-vm-$(date +%Y%m%d-%H%M%S)"
+test "$(cat "$CASCADE_DIR/status.txt")" = complete &&
+  sha256sum --check "$CASCADE_DIR/input-sha256.txt" &&
+  "$PY" scripts/cascade_vm_report.py check-pools "$CASCADE_DIR" &&
+  mkdir "$FORMAL_DIR" &&
+  mkdir "$FORMAL_DIR/config" &&
+  printf '%s\n' "$FORMAL_DIR" > outputs/last-formal-cascade-vm.txt &&
+  printf '%s\n' "$CASCADE_DIR" > "$FORMAL_DIR/cascade-source.txt" &&
+  printf 'services: {}\n' > "$FORMAL_DIR/config/default.yaml" &&
+  docker image inspect spark-mu-course:dev --format '{{.Id}}' > "$FORMAL_DIR/image-id.txt" &&
+  "$PY" -m mu_course.prepare_prediction --features rms --output "$FORMAL_DIR/features-rms" &&
+  "$PY" -m mu_course.prepare_cascade_prediction \
+    --pool "$CASCADE_DIR/spark/pool_2.npz" \
+    --pool-parameters "$CASCADE_DIR/spark/parameters.json" \
+    --output "$FORMAL_DIR/features-mu" &&
+  "$PY" scripts/cascade_vm_report.py check-features "$FORMAL_DIR" &&
+  sha256sum environment/compose.yaml environment/compose.limits.yaml \
+    scripts/run_formal_group.sh "$FORMAL_DIR/config/default.yaml" \
+    "$FORMAL_DIR/cascade-source.txt" \
+    "$FORMAL_DIR"/features-{rms,mu}/{features.npz,metadata.json} \
+    > "$FORMAL_DIR/input-sha256.txt"
+```
+
+看到 `Aligned train/test windows` 才继续。Cascade 每个 MU 提供 6 列，最终维数看 `features-mu/metadata.json`。若报模板池与预测通道不一致，先核对三份内置试次的通道顺序，以及当前模板池来自哪一批输入。
+
+**PPT 要保留评估说明：**这个三试次池用过第 2 试次的无标签肌电，投影还会按试次适配。这里是离线探索，同一窗口上的误差可作描述性比较；不能把它写成严格独立测试，也不能直接和旧版仅用训练试次拟合模板的分数下泛化结论。
+
+### 13.4 依次跑六组预测，再汇总
+
+每种特征／模型都跑 Docker 内的 Spark `local[1]` 和 Spark standalone 双 worker 两种配置。下面一次粘贴会**依次**跑六组，出错就停止；一共 24 次，含 6 次预热、18 条正式记录。正式批次期间不重新 build，不修改冻结输入。中途断开可用同一个批次；已经有 `SUCCESS` 的组会跳过，失败的半成品按 [9.9](#formal-comparison) 移出批次后再继续。
+
+```bash
+FORMAL_DIR=$(cat outputs/last-formal-cascade-vm.txt)
+(
+  set -e
+  test -s "$FORMAL_DIR/input-sha256.txt"
+  for pair in rms-ridge mu-ridge mu-gbt; do
+    for profile in local1 cluster2; do
+      group="$FORMAL_DIR/ml-$profile-$pair"
+      if [[ ! -f "$group/SUCCESS" ]]; then
+        bash scripts/run_formal_group.sh "$FORMAL_DIR" ml "$profile" "$pair"
+      fi
+    done
+  done
+  "$PWD/.venv-wsl/bin/python" scripts/summarize_formal.py "$FORMAL_DIR"
+)
+```
+
+应看到 `Completed groups: 6 formal records: 18`，并生成 `formal_runs.csv`、`formal_summary.csv`、`summary.md` 和 `ml-timings.png`。汇总会用预测 CSV 重算误差、核对双 worker 的主机名。预测表里的总耗时从 Spark 启动算到取回预测，不含特征准备、文件 I/O 和保存模型。local 与双 worker 使用各自的容器配置，解释耗时差异时注明资源条件。
+
+### 13.5 按 PPT 的版式重绘并传回 Windows
+
+在 **Ubuntu SSH** 项目目录执行。脚本读取本轮结果，生成新 Cascade 耗时图、预测表、三联曲线图，不重新分解或训练。三联图先校验各组试次、窗口和真实标签一致，横轴取窗口中点。
+
+```bash
+FORMAL_DIR=$(cat outputs/last-formal-cascade-vm.txt)
+sha256sum --check "$FORMAL_DIR/input-sha256.txt" &&
+  .venv-wsl/bin/python scripts/cascade_vm_report.py plot "$FORMAL_DIR" &&
+  ls -lh "$FORMAL_DIR/ppt-figures"
+```
+
+**如果还要原来的细粒度分项堆叠图：**下面可用旧正式 CSV 单独重绘，不依赖第三试次或 Cascade 批次。会生成 `fine-grained-mu-components.png`，并打印 `two-p2` 的 fit / total 比例。若已完成上面的新实验，建议把下方输出目录换成 `"$FORMAL_DIR/ppt-figures"`，一起回传。
+
+```bash
+.venv-wsl/bin/python scripts/cascade_vm_report.py plot-fine-grained \
+  docs/report/results/formal_summary.csv outputs/ppt-fine-grained
+```
+
+若需要用更新后的代码**重新测**这张细粒度图，按 [9.2–9.5](#formal-comparison) 另建原版分解批次，运行 `cpu`、`one-half`、`one-full`、`two-p1`、`two-p2`、`two-p4`，用 9.7–9.8 验收并汇总。把绘图命令里的 CSV 换成该批次的 `formal_summary.csv`。原版分解按旧参数运行，不读 Cascade 特征或三试次模板池。
+
+完成 Docker 实验后可以按 12.1 关闭容器。另开 **Windows PowerShell** 回传用于 PPT 的文件：
+
+```powershell
+$vmTarget = 'bigdata@192.168.135.128'
+$repoDir = 'E:\机动2311\大四上\大数据\spark-mu-decomp'
+$remoteBatch = (ssh $vmTarget 'cd ~/projects/spark-mu-decomp && cat outputs/last-formal-cascade-vm.txt' | Out-String).Trim()
+if ($LASTEXITCODE -ne 0 -or $remoteBatch -notmatch '^outputs/formal-cascade-vm-\d{8}-\d{6}$') {
+    throw '未找到本轮正式预测目录，请核对 Ubuntu 上的批次记录'
+}
+$dest = Join-Path $repoDir ("outputs\vm-results\" + ($remoteBatch -split '/')[-1])
+New-Item -ItemType Directory -Force -Path $dest | Out-Null
+$remoteRoot = "${vmTarget}:~/projects/spark-mu-decomp/$remoteBatch"
+scp -r "$remoteRoot/ppt-figures" "$remoteRoot/formal_summary.csv" "$remoteRoot/formal_runs.csv" $dest
+if ($LASTEXITCODE -ne 0) { throw '回传未完成，请确认绘图和汇总已成功' }
+Get-ChildItem -LiteralPath (Join-Path $dest 'ppt-figures')
+```
+
+Windows 中打开 `ppt-figures`，按本节开头的页码表替换图片和表格。更新资源页时，标题、配置和正文的百分比应与所选图来自同一个实验。上传或分享时只选需要的图表和汇总；第三试次原始文件、三试次输入和模板池留在 VM。
 
